@@ -1,0 +1,111 @@
+# RMHA超简单训练配置文件
+# 用于快速验证和确保能学到基本策略
+
+# 环境配置（超简单版）
+env:
+  name: "MRPP"
+  num_robots: 2                    # 2个机器人
+  grid_size_range: [6, 8]        # 更小的网格（6-8）
+  obstacle_density_range: [0.0, 0.1]  # 极低障碍物密度（0-10%）
+  obstacle_density_peak: 0.05     # 极低峰值（5%）
+  fov_size: 3
+  max_episode_steps: 200           # 增加最大步数（给更多时间）
+  action_space: 5
+  
+  # 奖励设置（更激进）
+  rewards:
+    move: 0.0                      # 移除移动惩罚（鼓励探索）
+    stay_on_goal: 10.0             # 大幅增加在目标停留奖励
+    stay_off_goal: 0.0             # 移除不在目标停留惩罚
+    collision: -0.5                # 减少碰撞惩罚
+    blocking: -0.2                 # 减少阻塞惩罚
+    reach_goal: 20.0               # 大幅增加到达目标奖励
+    distance_reward: 0.5           # 基于距离的奖励（每接近目标1步给予0.5奖励）
+
+# 模型配置（简化）
+model:
+  name: "RMHA"
+  
+  encoder:
+    conv_channels: [8, 16]         # 进一步减少CNN层数（2层）
+    conv_kernels: [3, 3]
+    pool_layers: []
+    fc_dims: [128]                 # 减少全连接层（1层）
+    lstm_hidden_dim: 128
+    
+  communication:
+    hidden_dim: 128
+    num_heads: 2
+    num_layers: 2
+    dropout: 0.0
+    use_gru: true
+    distance_embedding_dim: 32
+    comm_radius: 15                # 减小通信半径
+    use_distance_encoding: true
+    
+  policy:
+    hidden_dims: [128, 64]
+    activation: "relu"
+    
+  value:
+    hidden_dims: [128, 64]
+    activation: "relu"
+
+# MAPPO算法配置（更激进）
+algorithm:
+  name: "MAPPO"
+  
+  lr: 1.0e-3                       # 大幅增加学习率（从5e-4到1e-3）
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_param: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.1                # 大幅增加熵系数（鼓励探索）
+  max_grad_norm: 0.5
+  
+  num_steps: 200                   # 增加每次更新的步数
+  num_mini_batch: 4
+  ppo_epoch: 4
+  
+  use_intrinsic_reward: true
+  intrinsic_reward:
+    tau: 0.5                       # 减少距离阈值（更容易获得内在奖励）
+    phi: 0.5                       # 大幅增加内在奖励系数
+    beta: 0.01
+    buffer_size: 3                 # 减少buffer大小
+
+# 训练配置
+training:
+  total_timesteps: 100000         # 100万步（约4-5小时）
+  num_envs: 1
+  seed: 42
+  device: "cuda"
+  
+  log_interval: 10
+  save_interval: 50
+  eval_interval: 25
+  eval_episodes: 5
+  
+  checkpoint_dir: "results/checkpoints"
+  log_dir: "results/logs"
+  save_best: true
+  
+  use_tensorboard: true
+  use_wandb: false
+
+optimization:
+  use_amp: false
+  gradient_accumulation_steps: 1
+  use_lr_scheduler: false           # 禁用学习率调度（保持高学习率）
+  optimizer: "adam"
+  adam_eps: 1.0e-5
+  weight_decay: 0.0
+
+regularization:
+  use_layer_norm: true
+  use_residual: true
+  clip_observation: true
+  normalize_advantage: true
+  normalize_observation: false
+  normalize_reward: false
+

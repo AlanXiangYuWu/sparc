@@ -1,0 +1,124 @@
+# RMHA简化训练配置文件
+# 用于快速验证和提升训练性能
+
+# 环境配置（简化版）
+env:
+  name: "MRPP"
+  num_robots: 2                    # 减少到2个机器人（更容易学习）
+  grid_size_range: [8, 12]        # 减小网格大小范围（8-12）
+  obstacle_density_range: [0.0, 0.2]  # 降低障碍物密度（0-20%）
+  obstacle_density_peak: 0.1      # 降低峰值（10%）
+  fov_size: 3                      # 视野范围 (3x3)
+  max_episode_steps: 128           # 减少最大步数（128步）
+  action_space: 5                  # 动作数量
+  
+  # 奖励设置（优化）
+  rewards:
+    move: -0.1                     # 减少移动惩罚（从-0.3到-0.1）
+    stay_on_goal: 1.0              # 增加在目标停留奖励（从0.0到1.0）
+    stay_off_goal: -0.1            # 减少不在目标停留惩罚
+    collision: -1.0                # 减少碰撞惩罚（从-2.0到-1.0）
+    blocking: -0.5                 # 减少阻塞惩罚（从-1.0到-0.5）
+    reach_goal: 5.0                # 增加到达目标奖励（从0.0到5.0）
+
+# 模型配置（简化版）
+model:
+  name: "RMHA"
+  
+  # 编码器配置（简化）
+  encoder:
+    conv_channels: [8, 16, 32]    # 减少CNN层数（从7层到3层）
+    conv_kernels: [3, 3, 3]        # 卷积核大小
+    pool_layers: []                 # 移除池化层（避免尺寸问题）
+    fc_dims: [128, 128]            # 减少全连接层（从3层到2层）
+    lstm_hidden_dim: 128           # 减少LSTM隐藏维度（从256到128）
+    
+  # RMHA通信模块配置（简化）
+  communication:
+    hidden_dim: 128                # 减少隐藏层维度（从256到128）
+    num_heads: 2                    # 减少注意力头数（从4到2）
+    num_layers: 2                   # 减少Transformer层数（从3到2）
+    dropout: 0.0
+    use_gru: true
+    distance_embedding_dim: 32     # 减少距离嵌入维度（从64到32）
+    comm_radius: 20                # 减少通信半径（从40到20）
+    use_distance_encoding: true
+    
+  # 策略和价值网络配置（简化）
+  policy:
+    hidden_dims: [128, 64]         # 减少策略网络隐藏层
+    activation: "relu"
+    
+  value:
+    hidden_dims: [128, 64]         # 减少价值网络隐藏层
+    activation: "relu"
+
+# MAPPO算法配置（优化）
+algorithm:
+  name: "MAPPO"
+  
+  # PPO参数（调整）
+  lr: 5.0e-4                       # 增加学习率（从3e-4到5e-4）
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_param: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.05                # 增加熵系数（从0.01到0.05，鼓励探索）
+  max_grad_norm: 0.5
+  
+  # 训练参数
+  num_steps: 128                    # 减少每次更新的步数（从256到128）
+  num_mini_batch: 4                 # 减少小批次数量（从8到4）
+  ppo_epoch: 4
+  
+  # 内在奖励参数（调整）
+  use_intrinsic_reward: true
+  intrinsic_reward:
+    tau: 1.0                        # 减少距离阈值（从2.0到1.0）
+    phi: 0.2                        # 增加内在奖励系数（从0.1到0.2）
+    beta: 0.01
+    buffer_size: 5                  # 减少buffer大小（从10到5）
+
+# 训练配置
+training:
+  total_timesteps: 500000           # 减少总训练步数（50万步，约2-3小时）
+  num_envs: 1                       # 单环境（简化）
+  seed: 42
+  device: "cuda"
+  
+  # 日志和保存
+  log_interval: 5                   # 更频繁的日志（每5个episode）
+  save_interval: 50                 # 更频繁的保存（每50个episode）
+  eval_interval: 25                 # 更频繁的评估
+  eval_episodes: 5                  # 减少评估episode数
+  
+  # 检查点
+  checkpoint_dir: "results/checkpoints"
+  log_dir: "results/logs"
+  save_best: true
+  
+  # TensorBoard
+  use_tensorboard: true
+  use_wandb: false
+
+# 优化配置
+optimization:
+  use_amp: false                    # 禁用混合精度（简化）
+  gradient_accumulation_steps: 1
+  use_lr_scheduler: true
+  lr_scheduler:
+    type: "cosine"
+    warmup_steps: 5000
+  optimizer: "adam"
+  adam_eps: 1.0e-5
+  weight_decay: 0.0
+
+# 正则化配置
+regularization:
+  use_layer_norm: true
+  use_residual: true
+  clip_observation: true
+  normalize_advantage: true
+  normalize_observation: false
+  normalize_reward: false
+
