@@ -235,7 +235,7 @@ A: 参考`config/train_config.yaml`中的注释，主要调整学习率、批次
 
 ## 联系方式
 
-如有问题或建议，请提交Issue或联系：[您的邮箱]
+如有问题或建议，请提交Issue或联系：[xiangyu015@e.ntu.edu.sg]
 
 ---
 
