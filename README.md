@@ -4,23 +4,23 @@
 >
 > Sayang Mu\* · Xiangyu Wu\* · (\*Equal contribution) · Nanyang Technological University, Singapore
 
-[English](#english) | [中文](#chinese)
+[English](#english) | [中文](#中文)
 
 ## English
 
 ### Overview
 
-**SPARC** addresses two fundamental bottlenecks in Multi-Robot Path Planning (MRPP): *low communication efficiency* and *insufficient cooperative optimization*. We propose **RMHA** (Relation-enhanced Multi-Head Attention), a communication mechanism built on graph attention that explicitly encodes spatial relationships between robots into the attention weight computation.
+**SPARC** addresses two fundamental bottlenecks in Multi-Robot Path Planning (MRPP): *low communication efficiency* and *insufficient cooperative optimization*. We propose **RMHA** (Relation-enhanced Multi-Head Attention), a communication mechanism that explicitly encodes spatial relationships between robots into the attention weight computation.
 
 By embedding inter-robot Manhattan distances as edge features alongside observation content, RMHA enables communication weights to adapt dynamically to topological relationships. This reduces communication overhead while significantly improving path planning success rates — especially in high-density, obstacle-rich environments.
 
 ### Key Contributions
 
-1. **Spatial Relation-Enhanced Attention** — Inter-robot relative distance is incorporated as explicit edge information into multi-head attention, enabling distance-aware communication weight allocation.
+1. **Spatial Relation-Enhanced Attention** — Inter-robot relative distance is incorporated as explicit edge information into multi-head attention, enabling distance-aware communication weight allocation that jointly considers spatial proximity and message content.
 
-2. **End-to-End MAPPO Framework** — Distance-constrained local communication with attention masking reduces overhead while maintaining effective information exchange and training stability.
+2. **Communication Architecture for Stable Online RL** — Distance-constrained attention masking limits message passing to local neighbors, while GRU-gated message fusion adaptively balances new communications against prior beliefs. Together these address the training instabilities typical of Transformer-based communication in online multi-agent RL.
 
-3. **Scalability from 8 to 128 robots** — Trained on 8 robots, SPARC generalizes to 128 robots at test time, maintaining high success rates across varying obstacle densities.
+3. **Zero-Shot Scalability** — Attention-based communication with parameter sharing enables zero-shot generalization from 8-robot training to 128-robot deployment, with no performance collapse across varying obstacle densities.
 
 ### Method
 
@@ -38,13 +38,14 @@ where `d_{*→*}` is the learned embedding of the Manhattan distance between rob
 
 The full system integrates:
 
-- **CNN + LSTM encoder** for multi-modal local observations
-- **RMHA communication module** (Transformer encoder with spatial edge features)
+- **CNN encoder** — extracts spatial features from each robot's 8-channel 3×3 local observation (obstacle map, teammate positions, goal heuristics)
+- **LSTM** — maintains temporal memory across steps, essential for decision-making under partial observability (Dec-POMDP)
+- **RMHA communication module** — distance-aware multi-head attention with GRU-gated fusion
 - **MAPPO** (Centralized Training, Decentralized Execution)
 
 ### Results
 
-All evaluations use **128 robots** on a **40×40 grid** at obstacle densities of 0%, 15%, and 30%.
+All evaluations use **128 robots** on a **40×40 grid** at obstacle densities of 0%, 15%, and 30%. **SR** = Success Rate (percentage of robots reaching their goal within the episode time limit).
 
 #### Ablation: Communication Mechanism
 
@@ -54,17 +55,21 @@ All evaluations use **128 robots** on a **40×40 grid** at obstacle densities of
 | MAPPO + Graph Comm | ~98% | ~75% | ~50% |
 | **SPARC / RMHA (ours)** | **~100%** | **~90%** | **~75%** |
 
-At 30% obstacle density, SPARC outperforms non-enhanced communication by **+53% success rate**.
+At 30% obstacle density, SPARC outperforms graph communication (no distance encoding) by **+25% SR**, and no-communication baseline by **+53% SR**.
 
 #### Comparison with State-of-the-Art
+
+All methods evaluated under identical conditions: 128 robots, 40×40 random obstacle map, 256-step episode limit.
 
 | Method | SR @ 0% | SR @ 15% | SR @ 30% |
 | --- | --- | --- | --- |
 | ODrM* | ~100% | ~60% | ~20% |
 | SCRIMP | ~98% | ~70% | ~50% |
-| DHC | ~95% | ~30% | ~0% |
-| PICO | ~95% | ~30% | ~0% |
+| DHC † | ~95% | ~30% | ~0% |
+| PICO ‡ | ~95% | ~30% | ~0% |
 | **SPARC (ours)** | **~100%** | **~90%** | **~75%** |
+
+† DHC uses a 9×9 FOV. ‡ PICO uses an 11×11 FOV. SPARC uses a 3×3 FOV.
 
 ### Installation
 
@@ -144,35 +149,39 @@ RMHA 将机器人间的相对曼哈顿距离作为边特征显式嵌入注意力
 
 ### 核心贡献
 
-1. **空间关系增强注意力机制** — 将机器人间相对距离作为显式边信息融入多头注意力，实现距离感知的通信权重动态分配。
+1. **空间关系增强注意力机制** — 将机器人间相对距离作为显式边信息融入多头注意力，实现同时感知空间邻近性与消息内容的动态通信权重分配。
 
-2. **端到端 MAPPO 训练框架** — 引入距离约束的局部通信与注意力掩码，在保证有效信息交互的同时降低通信开销，提升训练稳定性。
+2. **面向在线强化学习的通信架构** — 距离约束的注意力掩码将消息传递限制在局部邻居范围内；GRU 门控消息融合自适应平衡新通信与历史信念。两者共同解决了 Transformer 通信模块在在线多智能体 RL 训练中的不稳定问题。
 
-3. **8 至 128 机器人的强泛化能力** — 仅用 8 个机器人训练，测试时直接扩展至 128 个机器人，在不同障碍密度下均保持高成功率。
+3. **零样本规模泛化** — 基于注意力机制的通信与参数共享，实现从 8 机器人训练直接零样本扩展至 128 机器人部署，在不同障碍密度下均无性能崩塌。
 
 ### 实验结果
 
-所有测试在 **128 机器人 · 40×40 网格** 下进行，障碍密度分别为 0%、15%、30%。
+所有测试在 **128 机器人 · 40×40 网格**下进行，障碍密度分别为 0%、15%、30%。**SR**（成功率）= 在回合时间限制内到达目标的机器人比例。
 
 #### 通信消融实验
 
-| 方法 | 成功率 0% | 成功率 15% | 成功率 30% |
+| 方法 | SR @ 0% | SR @ 15% | SR @ 30% |
 | --- | --- | --- | --- |
 | MAPPO（无通信） | ~95% | ~60% | ~40% |
 | MAPPO + 图通信 | ~98% | ~75% | ~50% |
 | **SPARC / RMHA（本文）** | **~100%** | **~90%** | **~75%** |
 
-在 30% 障碍密度下，SPARC 成功率比无距离增强通信方法高出 **53%**。
+在 30% 障碍密度下，SPARC 成功率比无距离编码的图通信高 **+25%**，比无通信基线高 **+53%**。
 
 #### 与 SOTA 方法对比
 
-| 方法 | 成功率 0% | 成功率 15% | 成功率 30% |
+所有方法在相同条件下评估：128 机器人，40×40 随机障碍地图，最大 256 步。
+
+| 方法 | SR @ 0% | SR @ 15% | SR @ 30% |
 | --- | --- | --- | --- |
 | ODrM* | ~100% | ~60% | ~20% |
 | SCRIMP | ~98% | ~70% | ~50% |
-| DHC | ~95% | ~30% | ~0% |
-| PICO | ~95% | ~30% | ~0% |
+| DHC † | ~95% | ~30% | ~0% |
+| PICO ‡ | ~95% | ~30% | ~0% |
 | **SPARC（本文）** | **~100%** | **~90%** | **~75%** |
+
+† DHC 使用 9×9 视野。‡ PICO 使用 11×11 视野。SPARC 仅使用 3×3 视野。
 
 ### 安装与使用
 
