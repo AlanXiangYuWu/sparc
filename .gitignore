@@ -26,6 +26,9 @@ results/checkpoints/
 # TensorBoard logs (large files)
 results/logs/
 
+# Training logs (not for open source)
+*.log
+
 # Temporary files
 *.tmp
 *.bak
