@@ -29,6 +29,13 @@ results/logs/
 # Training logs (not for open source)
 *.log
 
+# Non-public docs
+docs/说明.txt
+docs/面试笔记_RMHA项目.md
+
+# pip install artifacts
+=*
+
 # Temporary files
 *.tmp
 *.bak

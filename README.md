@@ -1,244 +1,225 @@
-# RMHA: 空间关系增强的多头注意力通信多机器人路径规划
+# SPARC: Spatial-Aware Path Planning via Attentive Robot Communication
 
-## 项目简介
+> Submitted to IROS 2026
+>
+> Sayang Mu\* · Xiangyu Wu\* · (\*Equal contribution) · Nanyang Technological University, Singapore
 
-本项目实现了论文《面向多机器人路径规划的空间关系增强多头注意力通信方法》中提出的RMHA（Relation-enhanced Multi-head Attention）算法。
+[English](#english) | [中文](#chinese)
 
-RMHA通过引入空间关系增强的多头注意力机制，将机器人间的相对距离信息与通信内容有机结合，实现通信权重的动态分配与优化，从而有效降低通信负载并提升多机器人路径规划性能。
+## English
 
-## 核心特性
+### Overview
 
-- ✅ 基于Transformer的空间关系增强多头注意力通信
-- ✅ MAPPO（Multi-Agent PPO）训练框架
-- ✅ 支持大规模多机器人场景（128+机器人）
-- ✅ 完整的消融实验和基线对比
-- ✅ 详细的可视化和评估工具
+**SPARC** addresses two fundamental bottlenecks in Multi-Robot Path Planning (MRPP): *low communication efficiency* and *insufficient cooperative optimization*. We propose **RMHA** (Relation-enhanced Multi-Head Attention), a communication mechanism built on graph attention that explicitly encodes spatial relationships between robots into the attention weight computation.
 
-## 环境要求
+By embedding inter-robot Manhattan distances as edge features alongside observation content, RMHA enables communication weights to adapt dynamically to topological relationships. This reduces communication overhead while significantly improving path planning success rates — especially in high-density, obstacle-rich environments.
 
-### 硬件要求
-- GPU: NVIDIA GPU（建议RTX 3080或更高）
-- RAM: 16GB+
-- 存储: 50GB+
+### Key Contributions
 
-### 软件要求
-- Python 3.7+
-- PyTorch 2.1+
-- CUDA 11.8+（如使用GPU）
+1. **Spatial Relation-Enhanced Attention** — Inter-robot relative distance is incorporated as explicit edge information into multi-head attention, enabling distance-aware communication weight allocation.
 
-## 安装指南
+2. **End-to-End MAPPO Framework** — Distance-constrained local communication with attention masking reduces overhead while maintaining effective information exchange and training stability.
 
-### 1. 克隆项目
+3. **Scalability from 8 to 128 robots** — Trained on 8 robots, SPARC generalizes to 128 robots at test time, maintaining high success rates across varying obstacle densities.
+
+### Method
+
+RMHA replaces standard dot-product attention with a spatially-aware variant.
+
+#### Standard attention
+
+`s_ij = o_i · Wq^T · Wk · o_j`
+
+#### RMHA (ours)
+
+`s_ij = (o_i + d_{i→j}) · Wq^T · Wk · (o_j + d_{j→i})`
+
+where `d_{*→*}` is the learned embedding of the Manhattan distance between robots. A communication radius mask further restricts message passing to local neighbors, modeling realistic bandwidth constraints.
+
+The full system integrates:
+
+- **CNN + LSTM encoder** for multi-modal local observations
+- **RMHA communication module** (Transformer encoder with spatial edge features)
+- **MAPPO** (Centralized Training, Decentralized Execution)
+
+### Results
+
+All evaluations use **128 robots** on a **40×40 grid** at obstacle densities of 0%, 15%, and 30%.
+
+#### Ablation: Communication Mechanism
+
+| Method | SR @ 0% | SR @ 15% | SR @ 30% |
+| --- | --- | --- | --- |
+| MAPPO (no comm) | ~95% | ~60% | ~40% |
+| MAPPO + Graph Comm | ~98% | ~75% | ~50% |
+| **SPARC / RMHA (ours)** | **~100%** | **~90%** | **~75%** |
+
+At 30% obstacle density, SPARC outperforms non-enhanced communication by **+53% success rate**.
+
+#### Comparison with State-of-the-Art
+
+| Method | SR @ 0% | SR @ 15% | SR @ 30% |
+| --- | --- | --- | --- |
+| ODrM* | ~100% | ~60% | ~20% |
+| SCRIMP | ~98% | ~70% | ~50% |
+| DHC | ~95% | ~30% | ~0% |
+| PICO | ~95% | ~30% | ~0% |
+| **SPARC (ours)** | **~100%** | **~90%** | **~75%** |
+
+### Installation
+
+Requirements: Python 3.7+, PyTorch 2.1+, CUDA 11.8+
+
 ```bash
-git clone <repository_url>
-cd RMHA_MRPP
-```
-
-### 2. 创建虚拟环境
-```bash
-conda create -n rmha python=3.7
-conda activate rmha
-```
-
-### 3. 安装依赖
-```bash
+git clone https://github.com/FirmamentWu/sparc.git
+cd sparc
+conda create -n sparc python=3.7
+conda activate sparc
 pip install -r requirements.txt
 ```
 
-## 项目结构
-
-```
-RMHA_MRPP/
-├── config/                      # 配置文件
-├── envs/                        # MRPP环境实现
-├── models/                      # 神经网络模型
-│   ├── encoder.py              # 观测编码器
-│   ├── rmha.py                 # RMHA通信模块
-│   ├── policy.py               # 策略网络
-│   └── value.py                # 价值网络
-├── algorithms/                  # 算法实现
-│   ├── mappo.py                # MAPPO训练框架
-│   ├── rmha_agent.py           # RMHA智能体
-│   └── baselines/              # 基线算法
-├── utils/                       # 工具函数
-├── train.py                     # 训练脚本
-├── test.py                      # 测试脚本
-├── visualize.py                 # 可视化脚本
-└── experiments/                 # 实验脚本
-```
-
-## 快速开始
-
-### 训练RMHA模型
+### Quick Start
 
 ```bash
+# Training
 python train.py --config config/train_config.yaml --algo rmha
-```
 
-### 训练基线模型
-
-```bash
-# MAPPO (无通信)
-python train.py --config config/train_config.yaml --algo mappo
-
-# MAPPO + 图通信
-python train.py --config config/train_config.yaml --algo mappo_gnn
-```
-
-### 测试模型
-
-```bash
+# Testing
 python test.py --checkpoint results/checkpoints/rmha_best.pth \
-               --num_robots 128 \
-               --grid_size 40 \
-               --obstacle_density 0.3 \
-               --num_episodes 100
+               --num_robots 128 --grid_size 40 --obstacle_density 0.3
+
+# Visualization
+python visualize.py --checkpoint results/checkpoints/rmha_best.pth \
+                    --save_path results/figures/trajectory.gif
+
+# Ablation and baselines
+python experiments/ablation_study.py
+python experiments/compare_baselines.py
 ```
 
-### 可视化结果
+### Project Structure
+
+```text
+sparc/
+├── algorithms/          # MAPPO trainer and RMHA agent
+├── config/              # Training / evaluation configs
+├── envs/                # Grid-world MRPP environment
+├── experiments/         # Ablation and baseline comparison scripts
+├── models/              # Encoder, RMHA module, policy, value networks
+├── paper/               # LaTeX source (IROS 2026)
+├── results/
+│   ├── checkpoints/     # Saved model weights (not tracked)
+│   └── logs/            # Training logs (not tracked)
+├── utils/               # Replay buffer, logger, metrics
+├── train.py
+├── test.py
+└── visualize.py
+```
+
+### Citation
+
+```bibtex
+@inproceedings{mu2026sparc,
+  title     = {{SPARC}: Spatial-Aware Path Planning via Attentive Robot Communication},
+  author    = {Mu, Sayang and Wu, Xiangyu},
+  booktitle = {Proceedings of the IEEE/RSJ International Conference on
+               Intelligent Robots and Systems (IROS)},
+  year      = {2026}
+}
+```
+
+### Contact
+
+For questions, open an Issue or email: `xiangyu015@e.ntu.edu.sg`
+
+---
+
+## 中文
+
+### 项目简介
+
+**SPARC** 针对多机器人路径规划（MRPP）中通信效率低下与协同优化不足两大核心问题，提出了基于图注意力机制的高效通信方法 **RMHA**（空间关系增强多头注意力）。
+
+RMHA 将机器人间的相对曼哈顿距离作为边特征显式嵌入注意力权重计算，使通信权重能够动态适应机器人的拓扑关系，在有效降低通信负载的同时显著提升路径规划成功率——尤其在高密度复杂障碍环境下优势突出。
+
+### 核心贡献
+
+1. **空间关系增强注意力机制** — 将机器人间相对距离作为显式边信息融入多头注意力，实现距离感知的通信权重动态分配。
+
+2. **端到端 MAPPO 训练框架** — 引入距离约束的局部通信与注意力掩码，在保证有效信息交互的同时降低通信开销，提升训练稳定性。
+
+3. **8 至 128 机器人的强泛化能力** — 仅用 8 个机器人训练，测试时直接扩展至 128 个机器人，在不同障碍密度下均保持高成功率。
+
+### 实验结果
+
+所有测试在 **128 机器人 · 40×40 网格** 下进行，障碍密度分别为 0%、15%、30%。
+
+#### 通信消融实验
+
+| 方法 | 成功率 0% | 成功率 15% | 成功率 30% |
+| --- | --- | --- | --- |
+| MAPPO（无通信） | ~95% | ~60% | ~40% |
+| MAPPO + 图通信 | ~98% | ~75% | ~50% |
+| **SPARC / RMHA（本文）** | **~100%** | **~90%** | **~75%** |
+
+在 30% 障碍密度下，SPARC 成功率比无距离增强通信方法高出 **53%**。
+
+#### 与 SOTA 方法对比
+
+| 方法 | 成功率 0% | 成功率 15% | 成功率 30% |
+| --- | --- | --- | --- |
+| ODrM* | ~100% | ~60% | ~20% |
+| SCRIMP | ~98% | ~70% | ~50% |
+| DHC | ~95% | ~30% | ~0% |
+| PICO | ~95% | ~30% | ~0% |
+| **SPARC（本文）** | **~100%** | **~90%** | **~75%** |
+
+### 安装与使用
 
 ```bash
+git clone https://github.com/FirmamentWu/sparc.git
+cd sparc
+conda create -n sparc python=3.7
+conda activate sparc
+pip install -r requirements.txt
+```
+
+```bash
+# 训练
+python train.py --config config/train_config.yaml --algo rmha
+
+# 测试
+python test.py --checkpoint results/checkpoints/rmha_best.pth \
+               --num_robots 128 --grid_size 40 --obstacle_density 0.3
+
+# 可视化
 python visualize.py --checkpoint results/checkpoints/rmha_best.pth \
                     --save_path results/figures/trajectory.gif
 ```
 
-## 实验复现
+### 项目结构
 
-### 实验1：通信消融实验
-
-```bash
-python experiments/ablation_study.py
+```text
+sparc/
+├── algorithms/          # MAPPO 训练框架 & RMHA 智能体
+├── config/              # 训练 / 测试配置文件
+├── envs/                # 网格世界 MRPP 环境
+├── experiments/         # 消融实验 & 基线对比脚本
+├── models/              # 编码器、RMHA 模块、策略网络、价值网络
+├── paper/               # LaTeX 论文源码（IROS 2026）
+├── results/
+│   ├── checkpoints/     # 模型权重（不纳入版本控制）
+│   └── logs/            # 训练日志（不纳入版本控制）
+├── utils/               # 经验回放、日志、评估指标
+├── train.py
+├── test.py
+└── visualize.py
 ```
 
-这将运行：
-- MAPPO（无通信）
-- MAPPO + 图通信
-- RMHA（完整方法）
+### 联系方式
 
-在不同障碍物密度（0%, 15%, 30%）下的对比实验。
-
-### 实验2：与SOTA算法对比
-
-```bash
-python experiments/compare_baselines.py
-```
-
-对比算法：
-- RMHA（本文方法）
-- SCRIMP
-- DHC
-- PICO
-- ODrM*
-
-### 生成所有结果图表
-
-```bash
-python experiments/generate_results.py --output_dir results/figures
-```
-
-## 评估指标
-
-本项目实现了论文中的三个核心评估指标：
-
-1. **成功率（Success Rate, SR）**：所有机器人无碰撞到达目标的比例
-2. **最大目标达成数（Max Reached, MR）**：最多到达目标的机器人数量
-3. **碰撞率（Collision Rate, CO）**：碰撞次数的归一化比例
-
-## 配置说明
-
-主要配置文件：`config/train_config.yaml`
-
-```yaml
-# 环境配置
-env:
-  num_robots: 8                # 训练时机器人数量
-  grid_size: [10, 40]          # 网格大小范围
-  obstacle_density: [0.0, 0.5] # 障碍物密度范围
-  fov_size: 3                  # 视野范围
-  max_episode_steps: 256       # 最大回合步数
-
-# 模型配置
-model:
-  hidden_dim: 256              # 隐藏层维度
-  num_heads: 4                 # 注意力头数
-  num_layers: 3                # Transformer层数
-  comm_radius: 40              # 通信半径
-
-# 训练配置
-training:
-  total_steps: 10000000        # 总训练步数
-  batch_size: 32               # 批次大小
-  lr: 3e-4                     # 学习率
-  gamma: 0.99                  # 折扣因子
-  gae_lambda: 0.95             # GAE参数
-  clip_param: 0.2              # PPO裁剪参数
-```
-
-## 实验结果
-
-根据论文实验结果：
-
-### 成功率对比（128机器人，40×40网格）
-
-| 算法 | 0%障碍物 | 15%障碍物 | 30%障碍物 |
-|------|----------|-----------|-----------|
-| RMHA | ~100% | ~90% | ~75% |
-| SCRIMP | ~98% | ~70% | ~50% |
-| DHC | ~95% | ~30% | ~0% |
-| PICO | ~95% | ~30% | ~0% |
-| MAPPO | ~95% | ~60% | ~40% |
-
-### 主要发现
-
-1. **空间关系编码的重要性**：RMHA通过融合机器人间距离信息，在高密度障碍物环境下成功率比无距离编码的方法提高53%
-
-2. **通信机制的有效性**：相比无通信的MAPPO，图通信方法在复杂环境下显著提升性能
-
-3. **可扩展性**：从训练时的8个机器人扩展到测试时的128个机器人，验证了良好的泛化能力
-
-## 常见问题
-
-### Q1: 训练需要多长时间？
-A: 使用双NVIDIA 8000 GPU，完整训练约需5-7天。使用单GPU可能需要10-14天。
-
-### Q2: 如何减少训练时间？
-A: 
-- 减少总训练步数（可能影响性能）
-- 使用更大的批次大小（需要更多GPU内存）
-- 使用多进程并行环境
-
-### Q3: 内存不足怎么办？
-A:
-- 减少批次大小
-- 减少并行环境数量
-- 使用梯度累积
-
-### Q4: 如何调整超参数？
-A: 参考`config/train_config.yaml`中的注释，主要调整学习率、批次大小、模型维度等。
-
-## 引用
-
-如果您使用本代码，请引用原论文：
-
-```bibtex
-@article{rmha2025,
-  title={面向多机器人路径规划的空间关系增强多头注意力通信方法},
-  author={...},
-  journal={...},
-  year={2025}
-}
-```
-
-## 许可证
-
-本项目仅用于学术研究目的。
-
-## 联系方式
-
-如有问题或建议，请提交Issue或联系：[xiangyu015@e.ntu.edu.sg]
+如有问题请提交 Issue 或发送邮件至：`xiangyu015@e.ntu.edu.sg`
 
 ---
 
-**更新日期**：2025-11-26  
-**版本**：v1.0
-
+*本项目仅用于学术研究。*
