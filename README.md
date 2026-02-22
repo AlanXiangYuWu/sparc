@@ -38,9 +38,9 @@ where `d_{*→*}` is the learned embedding of the Manhattan distance between rob
 
 The full system integrates:
 
-- **CNN encoder** — extracts spatial features from each robot's 8-channel 3×3 local observation (obstacle map, teammate positions, goal heuristics)
-- **LSTM** — maintains temporal memory across steps, essential for decision-making under partial observability (Dec-POMDP)
+- **Encoder** — CNN extracts spatial features from each robot's 8-channel 3×3 local observation (obstacle map, teammate positions, goal heuristics); a separate FC branch encodes a 7-dim vector input (goal direction, prior rewards, last action); both are fused and passed through LSTM for temporal memory across steps under partial observability (Dec-POMDP)
 - **RMHA communication module** — distance-aware multi-head attention with GRU-gated fusion
+- **Policy & Value networks** — shared post-communication features feed into an action distribution head and dual value heads (extrinsic + intrinsic)
 - **MAPPO** (Centralized Training, Decentralized Execution)
 
 ### Results
@@ -143,7 +143,7 @@ For questions, open an Issue or email: `xiangyu015@e.ntu.edu.sg`
 
 ### 项目简介
 
-**SPARC** 针对多机器人路径规划（MRPP）中通信效率低下与协同优化不足两大核心问题，提出了基于图注意力机制的高效通信方法 **RMHA**（空间关系增强多头注意力）。
+**SPARC** 针对多机器人路径规划（MRPP）中通信效率低下与协同优化不足两大核心问题，提出了空间关系增强多头注意力通信方法 **RMHA**（Relation-enhanced Multi-Head Attention）。
 
 RMHA 将机器人间的相对曼哈顿距离作为边特征显式嵌入注意力权重计算，使通信权重能够动态适应机器人的拓扑关系，在有效降低通信负载的同时显著提升路径规划成功率——尤其在高密度复杂障碍环境下优势突出。
 
@@ -154,6 +154,27 @@ RMHA 将机器人间的相对曼哈顿距离作为边特征显式嵌入注意力
 2. **面向在线强化学习的通信架构** — 距离约束的注意力掩码将消息传递限制在局部邻居范围内；GRU 门控消息融合自适应平衡新通信与历史信念。两者共同解决了 Transformer 通信模块在在线多智能体 RL 训练中的不稳定问题。
 
 3. **零样本规模泛化** — 基于注意力机制的通信与参数共享，实现从 8 机器人训练直接零样本扩展至 128 机器人部署，在不同障碍密度下均无性能崩塌。
+
+### 方法
+
+RMHA 将标准点积注意力替换为空间感知变体。
+
+#### 标准注意力
+
+`s_ij = o_i · Wq^T · Wk · o_j`
+
+#### RMHA（本文）
+
+`s_ij = (o_i + d_{i→j}) · Wq^T · Wk · (o_j + d_{j→i})`
+
+其中 `d_{*→*}` 为机器人间曼哈顿距离的可学习嵌入，通信半径掩码进一步将消息传递限制在局部邻居范围内。
+
+完整系统由以下模块组成：
+
+- **编码器** — CNN 从每个机器人的 8 通道 3×3 局部观测中提取空间特征；独立 FC 分支对 7 维向量输入（目标方向、历史奖励、上步动作）进行编码；两路特征融合后经 LSTM 保持跨时间步的记忆，适应部分可观测决策场景（Dec-POMDP）
+- **RMHA 通信模块** — 距离感知多头注意力 + GRU 门控消息融合
+- **策略网络与价值网络** — 共享通信后特征，分别输出动作概率分布与双路价值估计（外在 + 内在）
+- **MAPPO**（集中训练、分散执行）
 
 ### 实验结果
 
