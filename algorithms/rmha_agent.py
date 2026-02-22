@@ -10,7 +10,7 @@ import numpy as np
 
 from models.encoder import ObservationEncoder
 from models.rmha import RMHACommunication
-from models.policy import PolicyNetwork, BlockingPredictor
+from models.policy import PolicyNetwork
 from models.value import DualValueNetwork
 
 
@@ -23,7 +23,6 @@ class RMHAAgent(nn.Module):
     - RMHA通信
     - 策略输出
     - 价值估计
-    - 阻塞预测
     """
     
     def __init__(
@@ -99,10 +98,7 @@ class RMHAAgent(nn.Module):
             hidden_dims=tuple(value_config.get("hidden_dims", [256, 128])),
             activation=value_config.get("activation", "relu")
         )
-        
-        # 阻塞预测器
-        self.blocking_predictor = BlockingPredictor(input_dim=input_dim)
-        
+
         # 消息存储
         self.message_dim = comm_config.get("hidden_dim", 256)
         self.current_messages = None
@@ -136,7 +132,6 @@ class RMHAAgent(nn.Module):
             - entropy: 熵
             - messages: 通信消息
             - new_hidden_states: 新的隐藏状态
-            - blocking_probs: 阻塞概率
         """
         batch_size, num_robots = obs_image.size(0), obs_image.size(1)
         
@@ -207,18 +202,14 @@ class RMHAAgent(nn.Module):
         
         # 价值网络
         values_ext, values_int = self.value(combined_features_flat)
-        
-        # 阻塞预测
-        blocking_probs = self.blocking_predictor(combined_features_flat)
-        
+
         # 重塑回(batch_size, num_robots)
         actions = actions.view(batch_size, num_robots)
         log_probs = log_probs.view(batch_size, num_robots)
         entropy = entropy.view(batch_size, num_robots)
         values_ext = values_ext.view(batch_size, num_robots)
         values_int = values_int.view(batch_size, num_robots)
-        blocking_probs = blocking_probs.view(batch_size, num_robots)
-        
+
         return {
             "actions": actions,
             "log_probs": log_probs,
@@ -226,8 +217,7 @@ class RMHAAgent(nn.Module):
             "values_int": values_int,
             "entropy": entropy,
             "messages": self.current_messages,
-            "new_hidden_states": new_hidden_states,
-            "blocking_probs": blocking_probs
+            "new_hidden_states": new_hidden_states
         }
     
     def evaluate_actions(

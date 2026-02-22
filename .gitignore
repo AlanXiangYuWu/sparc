@@ -19,12 +19,12 @@ env/
 *.swo
 .DS_Store
 
-# Model checkpoints (large files)
-results/checkpoints/
-*.pth
+# Experiment scripts and results (not for open source)
+experiments/
+results/
 
-# TensorBoard logs (large files)
-results/logs/
+# Model checkpoints (large files)
+*.pth
 
 # Training logs (not for open source)
 *.log
@@ -32,6 +32,9 @@ results/logs/
 # Non-public docs
 docs/说明.txt
 docs/面试笔记_RMHA项目.md
+docs/项目原理详解.md
+docs/paper.docx
+docs/training_questions_seed51.md
 
 # pip install artifacts
 =*
