@@ -173,8 +173,7 @@ RMHA Agent（大脑）— 负责"思考和决策"
 │         │
 │         ▼
 ├─ Policy网络 ──────────── 输出动作（上下左右停）
-├─ Value网络 ───────────── 评估当前状态好不好
-└─ Blocking预测 ────────── 预测是否会阻塞
+└─ Value网络 ───────────── 评估当前状态好不好
 它只负责：给一个观测，输出一个动作 + 价值估计。
 
 MAPPO Trainer（教练）— 负责"训练和优化"
@@ -685,7 +684,6 @@ for name, module in [
     ('2. Communication (RMHA)', agent.communication),
     ('3. Policy Network', agent.policy),
     ('4. Value Network', agent.value),
-    ('5. Blocking Predictor', agent.blocking_predictor)
 ]:
     params = sum(p.numel() for p in module.parameters())
     total += params
@@ -722,7 +720,6 @@ for name, module in [
     ('2. Communication (RMHA)', agent.communication),
     ('3. Policy (策略网络)', agent.policy),
     ('4. Value (价值网络)', agent.value),
-    ('5. Blocking (阻塞预测)', agent.blocking_predictor)
 ]:
     params = sum(p.numel() for p in module.parameters())
     total += params
@@ -735,13 +732,12 @@ OUT
 2. Communication (RMHA): 753,600
 3. Policy (策略网络): 41,477
 4. Value (价值网络): 82,434
-5. Blocking (阻塞预测): 41,217
 
-Total: 1,072,160
-训练的是一个完整模型（RMHA Agent），包含5个子模块，一起训练，一起更新：
+Total: 1,030,943
+训练的是一个完整模型（RMHA Agent），包含4个子模块，一起训练，一起更新：
 
 
-RMHA Agent (1,072,160 参数，全部一起训练)
+RMHA Agent (1,030,943 参数，全部一起训练)
 │
 ├── 1. Encoder (153,432)       ← 处理 image + vector
 │       CNN处理image → LSTM记忆历史 → 输出特征向量
@@ -752,11 +748,8 @@ RMHA Agent (1,072,160 参数，全部一起训练)
 ├── 3. Policy (41,477)         ← 输出动作
 │       特征 → 概率分布 → 采样动作(上下左右停)
 │
-├── 4. Value (82,434)          ← 输出状态评分
-│       特征 → 这个状态值多少分(外在+内在)
-│
-└── 5. Blocking (41,217)       ← 预测阻塞
-        特征 → 是否会阻塞别的机器人
+└── 4. Value (82,434)          ← 输出状态评分
+        特征 → 这个状态值多少分(外在+内在)
 三个输入不是对应三个模型
 三个输入的流向是：
 
@@ -765,9 +758,8 @@ image ──────┐
             ├──→ Encoder ──→ 特征向量 ──┐
 vector ─────┘                           │
                                         ├──→ 拼接 ──→ Policy → 动作
-distance_matrix ──→ RMHA通信 ──→ 消息 ──┘         ├──→ Value  → 评分
-                                                   └──→ Blocking → 阻塞概率
-Encoder 不是三个，是一个，它同时接收 image 和 vector，内部拼接后处理。RMHA通信模块用 distance_matrix 来加权机器人间的信息交换。最后 Policy/Value/Blocking 共用拼接后的特征。
+distance_matrix ──→ RMHA通信 ──→ 消息 ──┘         └──→ Value  → 评分
+Encoder 不是三个，是一个，它同时接收 image 和 vector，内部拼接后处理。RMHA通信模块用 distance_matrix 来加权机器人间的信息交换。最后 Policy/Value 共用拼接后的特征。
 
 训练时怎么一起更新？
 在 mappo.py:248-259：
@@ -1338,7 +1330,7 @@ obs → Encoder(CNN+LSTM) → encoded_features (128维)
                               ▼
                      Policy (input_dim=128) → 动作
                      Value  (input_dim=128) → 评分
-训练的模型：Encoder + Policy + Value + Blocking（没有通信模块）
+训练的模型：Encoder + Policy + Value（没有通信模块）
 
 2. --algo mappo_gnn（有通信，无距离编码）
 
@@ -1362,7 +1354,7 @@ obs → Encoder → encoded_features (128维)
                      ▼
               Policy (input_dim=256) → 动作
               Value  (input_dim=256) → 评分
-训练的模型：Encoder + RMHA通信（距离无效）+ Policy + Value + Blocking
+训练的模型：Encoder + RMHA通信（距离无效）+ Policy + Value
 
 3. --algo rmha（完整RMHA）
 
@@ -1385,7 +1377,7 @@ obs → Encoder → encoded_features (128维)
                      │
                      ▼
               Policy (input_dim=256) → 动作
-训练的模型：Encoder + RMHA通信（距离有效）+ Policy + Value + Blocking
+训练的模型：Encoder + RMHA通信（距离有效）+ Policy + Value
 
 总结
 三种算法用的是同一套代码、同一个模型类，区别只是开关不同：

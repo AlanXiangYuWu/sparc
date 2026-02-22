@@ -1,3 +1,4 @@
+# 旧配置文件（从 code+paper/config/train_config_stable.yaml 复制）
 # RMHA稳定优化配置
 # 针对价值函数不稳定和成功率低的问题
 
@@ -81,7 +82,7 @@ algorithm:
 
 # 训练配置
 training:
-  total_timesteps: 10000000        # 1000万步
+  total_timesteps: 2000000         # 200万步
   num_envs: 1
   seed: 42
   device: "cuda"
