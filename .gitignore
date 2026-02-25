@@ -31,11 +31,11 @@ results/
 
 # Non-public docs
 docs/说明.txt
-docs/面试笔记_RMHA项目.md
+docs/InterviewAnalysis.md
 docs/项目原理详解.md
 docs/paper.docx
 docs/paper.md
-docs/training_questions_seed51.md
+docs/项目问题.md
 
 # pip install artifacts
 =*

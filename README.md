@@ -2,7 +2,9 @@
 
 > Submitted to IROS 2026
 >
-> Sayang Mu\* · Xiangyu Wu\* · (\*Equal contribution) · Nanyang Technological University, Singapore
+> Xiangyu Wu\* · Sayang Mu\* · Bo An† · Nanyang Technological University, Singapore
+>
+> \*Equal contribution · †Corresponding author
 
 [English](#english) | [中文](#中文)
 
@@ -36,12 +38,129 @@ RMHA replaces standard dot-product attention with a spatially-aware variant.
 
 where `d_{*→*}` is the learned embedding of the Manhattan distance between robots. A communication radius mask further restricts message passing to local neighbors, modeling realistic bandwidth constraints.
 
-The full system integrates:
+#### Model Architecture
 
-- **Encoder** — CNN extracts spatial features from each robot's 8-channel 3×3 local observation (obstacle map, teammate positions, goal heuristics); a separate FC branch encodes a 7-dim vector input (goal direction, prior rewards, last action); both are fused and passed through LSTM for temporal memory across steps under partial observability (Dec-POMDP)
-- **RMHA communication module** — distance-aware multi-head attention with GRU-gated fusion
-- **Policy & Value networks** — shared post-communication features feed into an action distribution head and dual value heads (extrinsic + intrinsic)
-- **MAPPO** (Centralized Training, Decentralized Execution)
+```text
+═══ Stage 1: Observation Encoder ═══
+
+image (N, 8, 3, 3)                         vector (N, 7)
+       │                                        │
+  CNN (4×Conv2d + AdaptiveAvgPool)          FC: Linear(7→128) + ReLU
+       → (N, 64)                                → (N, 128)
+       │                                        │
+       └──────────→ Concat (N, 192) ←───────────┘
+                          │
+                 3-layer FC (192→256→256→256)
+                          │
+                    LSTM (256, 256)
+                          │
+                    h_i^t (N, 256)     ← per-robot encoded features
+
+═══ Stage 2: RMHA Communication (×3 layers) ═══
+
+distance_matrix (N, N)          messages M = h_i^t
+         │                              │
+  Embedding(201, 64)                    │
+  W₁(64→256) → Q branch                │
+  W₂(64→256) → K branch                │
+         │                              │
+         ▼                              ▼
+  Q = W_q(M + W₁·D)    K = W_k(M + W₂·D)    V = W_v(M)
+                        │
+         Masked Multi-Head Attention (4 heads, d_k=64)
+           comm_radius mask: dist > R → −∞
+                        │
+                  GRU-gated residual
+                        │
+              FFN(256→1024→256) + LayerNorm
+                        │
+            updated messages (N, 256)
+
+═══ Stage 3: Output Heads ═══
+
+            Concat[h_i^t, messages] (N, 512)
+                        │
+               ┌────────┴────────┐
+               │                 │
+          Policy Network    Value Network
+          (512→256→128→5)   (512→256→128→1)
+               │                 │
+           π(a|o)             V(s)
+```
+
+#### Feature Input Design
+
+**Image (N, 8, 3, 3)** — 8-channel local observation within 3×3 FOV (not a rendered image, but stacked binary/feature maps):
+
+| Channel | Content | Purpose |
+| --- | --- | --- |
+| 1-4 | Heuristic maps (up/down/left/right) | Whether moving in each direction gets closer to goal (binary) |
+| 5 | Obstacle map | Walls and boundaries within FOV |
+| 6 | Other robots map | Teammate positions within FOV |
+| 7 | Own goal map | Own goal position (when visible in FOV) |
+| 8 | Other goals map | Teammates' goal positions within FOV |
+
+**Vector (N, 7)** — complements the image with information beyond the 3×3 FOV:
+
+| Dims | Content | Purpose |
+| --- | --- | --- |
+| dx, dy | Normalized offset to goal | Global navigation direction (image only covers 3×3) |
+| d | Normalized Euclidean distance to goal | How far the goal is |
+| re_prev | Previous extrinsic reward | Immediate feedback (e.g., -2.0 = collision last step) |
+| ri_prev | Previous intrinsic reward | Exploration signal |
+| dmin_prev | Min distance to historical positions | Novelty indicator for exploration |
+| a_prev | Previous action (0-4) | Action continuity (avoid oscillation) |
+
+**Distance Matrix (N, N)** — pairwise Manhattan distances between all robots, recomputed every step; used by RMHA to generate spatially-aware attention weights.
+
+#### Collision Handling
+
+At each timestep, the environment checks for two collision types and resolves them before updating positions:
+
+- **Vertex collision**: two robots move to the same cell → both stay in place, each receives -2.0 penalty
+- **Edge collision (swap)**: two robots exchange positions → both stay in place, each receives -2.0 penalty
+
+#### Reward Design
+
+The reward signal combines rule-based extrinsic and intrinsic components (no learned reward networks):
+
+**Extrinsic reward** (per robot per step):
+
+| Component | Condition | Value | Purpose |
+| --- | --- | --- | --- |
+| Move cost | Any movement action | -0.3 | Encourage efficiency |
+| Idle cost | STAY but not on goal | -0.3 | Discourage loitering |
+| Distance shaping | Moved closer to goal | +0.1 per step closer | Continuous gradient signal |
+| Collision penalty | Vertex or edge collision | -2.0 | Avoid conflicts |
+| Reach goal | First arrival at goal | configurable | Goal incentive |
+
+**Intrinsic reward** (episodic count-based exploration):
+
+Each robot maintains a sparse buffer of visited milestone positions. When the current position has Manhattan distance >= 2 to all buffer entries, a +0.1 exploration bonus is awarded and the position is added to the buffer. This prevents robots from circling in familiar areas.
+
+#### Multi-Hop Information Propagation
+
+RMHA uses 3 stacked Transformer layers. Each layer enables one hop of message passing, progressively expanding each robot's information horizon:
+
+```text
+Layer 1: Robot A directly receives Robot B's message          (1-hop)
+Layer 2: Robot A receives B's message which already contains C (2-hop)
+Layer 3: Robot A indirectly perceives Robot D via B→C→D chain  (3-hop)
+```
+
+This multi-hop design allows robots to coordinate beyond their local communication radius without explicit global broadcasting.
+
+#### Zero-Shot Scalability Setup
+
+The model is trained at small scale and tested at large scale without any fine-tuning:
+
+| | Training | Testing |
+| --- | --- | --- |
+| Grid size | Random from {10, 25, 40} | Fixed 40×40 |
+| Obstacle density | Triangular distribution [0%, 50%], peak 33% | Fixed 0% / 15% / 30% |
+| Robot count | **8** | **16 / 32 / 64 / 128** |
+
+This train-test discrepancy is intentional: the attention mechanism naturally handles variable-length sequences (N changes only the attention matrix size), and parameter sharing across robots means individual robot behavior is N-invariant.
 
 ### Results
 
@@ -124,9 +243,9 @@ sparc/
 ### Citation
 
 ```bibtex
-@inproceedings{mu2026sparc,
+@inproceedings{wu2026sparc,
   title     = {{SPARC}: Spatial-Aware Path Planning via Attentive Robot Communication},
-  author    = {Mu, Sayang and Wu, Xiangyu},
+  author    = {Wu, Xiangyu and Mu, Sayang and An, Bo},
   booktitle = {Proceedings of the IEEE/RSJ International Conference on
                Intelligent Robots and Systems (IROS)},
   year      = {2026}
@@ -169,12 +288,129 @@ RMHA 将标准点积注意力替换为空间感知变体。
 
 其中 `d_{*→*}` 为机器人间曼哈顿距离的可学习嵌入，通信半径掩码进一步将消息传递限制在局部邻居范围内。
 
-完整系统由以下模块组成：
+#### 模型架构
 
-- **编码器** — CNN 从每个机器人的 8 通道 3×3 局部观测中提取空间特征；独立 FC 分支对 7 维向量输入（目标方向、历史奖励、上步动作）进行编码；两路特征融合后经 LSTM 保持跨时间步的记忆，适应部分可观测决策场景（Dec-POMDP）
-- **RMHA 通信模块** — 距离感知多头注意力 + GRU 门控消息融合
-- **策略网络与价值网络** — 共享通信后特征，分别输出动作概率分布与双路价值估计（外在 + 内在）
-- **MAPPO**（集中训练、分散执行）
+```text
+═══ 阶段一：观测编码器 ═══
+
+image (N, 8, 3, 3)                         vector (N, 7)
+       │                                        │
+  CNN (4×Conv2d + AdaptiveAvgPool)          FC: Linear(7→128) + ReLU
+       → (N, 64)                                → (N, 128)
+       │                                        │
+       └──────────→ Concat (N, 192) ←───────────┘
+                          │
+                 3层FC (192→256→256→256)
+                          │
+                    LSTM (256, 256)
+                          │
+                    h_i^t (N, 256)     ← 每个机器人的编码特征
+
+═══ 阶段二：RMHA 通信模块（×3 层）═══
+
+distance_matrix (N, N)          消息 M = h_i^t
+         │                              │
+  Embedding(201, 64)                    │
+  W₁(64→256) → Q 分支                   │
+  W₂(64→256) → K 分支                   │
+         │                              │
+         ▼                              ▼
+  Q = W_q(M + W₁·D)    K = W_k(M + W₂·D)    V = W_v(M)
+                        │
+         掩码多头注意力（4头, d_k=64）
+           通信半径掩码: dist > R → −∞
+                        │
+                  GRU 门控残差
+                        │
+              FFN(256→1024→256) + LayerNorm
+                        │
+            更新后消息 (N, 256)
+
+═══ 阶段三：输出头 ═══
+
+            Concat[h_i^t, messages] (N, 512)
+                        │
+               ┌────────┴────────┐
+               │                 │
+            策略网络          价值网络
+          (512→256→128→5)   (512→256→128→1)
+               │                 │
+           π(a|o)             V(s)
+```
+
+#### 特征输入设计
+
+**Image (N, 8, 3, 3)** — 8 通道局部观测（非渲染图片，而是堆叠的二值/特征矩阵）：
+
+| 通道 | 内容 | 用途 |
+| --- | --- | --- |
+| 1-4 | 启发式地图（上/下/左/右） | 向该方向移动是否更接近目标（二值） |
+| 5 | 障碍物地图 | FOV 内的墙壁和边界 |
+| 6 | 其他机器人地图 | FOV 内队友位置 |
+| 7 | 自身目标地图 | 自身目标位置（在 FOV 内时标记） |
+| 8 | 他人目标地图 | FOV 内队友的目标位置 |
+
+**Vector (N, 7)** — 补充 image 无法覆盖的 3×3 FOV 以外的信息：
+
+| 维度 | 内容 | 用途 |
+| --- | --- | --- |
+| dx, dy | 到目标的归一化偏移 | 全局导航方向 |
+| d | 到目标的归一化欧氏距离 | 目标远近 |
+| re_prev | 上一步外在奖励 | 即时反馈（如 -2.0 = 上步碰撞） |
+| ri_prev | 上一步内在奖励 | 探索信号 |
+| dmin_prev | 与历史位置最小距离 | 新颖度指标 |
+| a_prev | 上一步动作 (0-4) | 动作连贯性（避免来回震荡） |
+
+**Distance Matrix (N, N)** — 所有机器人之间的曼哈顿距离矩阵，每步重新计算；RMHA 据此生成空间感知的注意力权重。
+
+#### 碰撞处理
+
+每个时间步中，环境检测两种碰撞类型并在更新位置前解决：
+
+- **顶点碰撞**：两个机器人移动到同一格子 → 双方退回原位，各扣 -2.0 惩罚
+- **边碰撞（交换碰撞）**：两个机器人互换位置 → 双方退回原位，各扣 -2.0 惩罚
+
+#### 奖励设计
+
+奖励信号由规则计算的外在奖励和内在奖励组成（不使用可学习的奖励网络）：
+
+**外在奖励**（每步每个机器人）：
+
+| 分量 | 条件 | 值 | 作用 |
+| --- | --- | --- | --- |
+| 移动代价 | 执行移动动作 | -0.3 | 鼓励高效到达 |
+| 怠惰惩罚 | 未到目标但原地不动 | -0.3 | 防止摸鱼 |
+| 距离塑形 | 向目标靠近 | +0.1/步 | 持续梯度信号 |
+| 碰撞惩罚 | 顶点或边碰撞 | -2.0 | 避免冲突 |
+| 到达奖励 | 首次到达目标 | 可配置 | 目标激励 |
+
+**内在奖励**（基于 episode 内计数的探索机制）：
+
+每个机器人维护一个稀疏的已访问里程碑缓冲区。当前位置与缓冲区中所有位置的曼哈顿距离均 >= 2 时，给予 +0.1 探索奖励并将该位置加入缓冲区。此机制防止机器人在已访问区域原地打转。
+
+#### 多跳信息传播
+
+RMHA 使用 3 层堆叠的 Transformer 层，每层实现一跳消息传递，逐步扩大每个机器人的信息感知范围：
+
+```text
+第1层: 机器人 A 直接获取机器人 B 的信息          (1-hop)
+第2层: 机器人 A 获取"B 眼中的 C"的信息            (2-hop)
+第3层: 机器人 A 间接感知机器人 D (经 B→C→D 链路)  (3-hop)
+```
+
+多跳设计使机器人无需全局广播即可实现超出局部通信半径的协调。
+
+#### 零样本规模泛化设置
+
+模型在小规模训练，在大规模测试，无需任何微调：
+
+| | 训练时 | 测试时 |
+| --- | --- | --- |
+| 网格大小 | 从 {10, 25, 40} 随机采样 | 固定 40×40 |
+| 障碍物密度 | 三角分布 [0%, 50%]，峰值 33% | 固定 0% / 15% / 30% |
+| 机器人数量 | **8** | **16 / 32 / 64 / 128** |
+
+训练与测试的规模差异是有意设计的：注意力机制天然支持变长序列（N 变化仅影响注意力矩阵大小），参数共享使单个机器人的行为与 N 无关。
 
 ### 实验结果
 
