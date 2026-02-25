@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.12.10)  15 FEB 2026 11:15
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.12.10)  25 FEB 2026 21:00
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -327,30 +327,30 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-LaTeX Font Info:    Calculating math sizes for size <11> on input line 43.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 43.
+LaTeX Font Info:    Calculating math sizes for size <11> on input line 42.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 42.
 
  (/usr/local/texlive/2025basic/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 43.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 42.
 
 
 (/usr/local/texlive/2025basic/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 LaTeX Font Info:    Trying to load font information for OMS+ptm on input line 4
-3.
+2.
 
 (/usr/local/texlive/2025basic/texmf-dist/tex/latex/psnfss/omsptm.fd
 File: omsptm.fd 
 )
 LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 43.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 42.
 
 
 
-Underfull \hbox (badness 1377) in paragraph at lines 159--166
+Underfull \hbox (badness 1377) in paragraph at lines 158--165
 \OT1/ptm/m/n/10 robot ini-tially fol-lows its in-di-vid-ual op-ti-mal path; upo
 n
  []
@@ -362,7 +362,7 @@ usr/local/texlive/2025basic/texmf-dist/fonts/enc/dvips/base/8r.enc}
 
 
 ]
-Underfull \hbox (badness 1496) in paragraph at lines 202--207
+Underfull \hbox (badness 1496) in paragraph at lines 201--206
 []\OT1/ptm/m/n/10 We con-struct an \OT1/ptm/b/n/10 end-to-end co-op-er-a-tive l
 earn-ing
  []
@@ -372,7 +372,7 @@ earn-ing
 <figures/mrpp-constraints.png, id=15, 626.34pt x 227.34938pt>
 File: figures/mrpp-constraints.png Graphic file (type png)
 <use figures/mrpp-constraints.png>
-Package pdftex.def Info: figures/mrpp-constraints.png  used on input line 270.
+Package pdftex.def Info: figures/mrpp-constraints.png  used on input line 269.
 (pdftex.def)             Requested size: 214.20154pt x 77.75221pt.
 
 
@@ -380,7 +380,7 @@ Package pdftex.def Info: figures/mrpp-constraints.png  used on input line 270.
 <figures/marl-modeling.png, id=25, 231.921pt x 154.395pt>
 File: figures/marl-modeling.png Graphic file (type png)
 <use figures/marl-modeling.png>
-Package pdftex.def Info: figures/marl-modeling.png  used on input line 379.
+Package pdftex.def Info: figures/marl-modeling.png  used on input line 378.
 (pdftex.def)             Requested size: 214.20154pt x 142.60582pt.
 
 
@@ -390,14 +390,14 @@ Package pdftex.def Info: figures/marl-modeling.png  used on input line 379.
 <figures/rmha-module.png, id=33, 184.617pt x 143.883pt>
 File: figures/rmha-module.png Graphic file (type png)
 <use figures/rmha-module.png>
-Package pdftex.def Info: figures/rmha-module.png  used on input line 501.
+Package pdftex.def Info: figures/rmha-module.png  used on input line 500.
 (pdftex.def)             Requested size: 252.0pt x 196.40497pt.
 
 
 <figures/rmha-network.png, id=34, 241.776pt x 126.801pt>
 File: figures/rmha-network.png Graphic file (type png)
 <use figures/rmha-network.png>
-Package pdftex.def Info: figures/rmha-network.png  used on input line 591.
+Package pdftex.def Info: figures/rmha-network.png  used on input line 590.
 (pdftex.def)             Requested size: 252.0pt x 132.16788pt.
 
 
@@ -405,12 +405,12 @@ Package pdftex.def Info: figures/rmha-network.png  used on input line 591.
 <figures/grid-environment.png, id=40, 137.313pt x 135.342pt>
 File: figures/grid-environment.png Graphic file (type png)
 <use figures/grid-environment.png>
-Package pdftex.def Info: figures/grid-environment.png  used on input line 707.
+Package pdftex.def Info: figures/grid-environment.png  used on input line 706.
 (pdftex.def)             Requested size: 189.0pt x 186.28683pt.
 <figures/scalability.png, id=41, 172.134pt x 108.405pt>
 File: figures/scalability.png Graphic file (type png)
 <use figures/scalability.png>
-Package pdftex.def Info: figures/scalability.png  used on input line 727.
+Package pdftex.def Info: figures/scalability.png  used on input line 726.
 (pdftex.def)             Requested size: 214.20154pt x 134.9038pt.
 
 
@@ -420,7 +420,7 @@ Package pdftex.def Info: figures/scalability.png  used on input line 727.
 <figures/ablation-reward.png, id=49, 124.7862pt x 81.4242pt>
 File: figures/ablation-reward.png Graphic file (type png)
 <use figures/ablation-reward.png>
-Package pdftex.def Info: figures/ablation-reward.png  used on input line 787.
+Package pdftex.def Info: figures/ablation-reward.png  used on input line 786.
 (pdftex.def)             Requested size: 252.0pt x 164.4383pt.
 
 
@@ -428,16 +428,16 @@ Package pdftex.def Info: figures/ablation-reward.png  used on input line 787.
 File: figures/ablation-sr-mappo-vs-graphcomm.png Graphic file (type png)
 <use figures/ablation-sr-mappo-vs-graphcomm.png>
 Package pdftex.def Info: figures/ablation-sr-mappo-vs-graphcomm.png  used on in
-put line 803.
+put line 802.
 (pdftex.def)             Requested size: 214.20154pt x 147.16777pt.
 <figures/ablation-sr-rmha-vs-graphcomm.png, id=52, 173.448pt x 119.574pt>
 File: figures/ablation-sr-rmha-vs-graphcomm.png Graphic file (type png)
 <use figures/ablation-sr-rmha-vs-graphcomm.png>
 Package pdftex.def Info: figures/ablation-sr-rmha-vs-graphcomm.png  used on inp
-ut line 811.
+ut line 810.
 (pdftex.def)             Requested size: 214.20154pt x 147.67723pt.
 
-Underfull \hbox (badness 3492) in paragraph at lines 813--813
+Underfull \hbox (badness 3492) in paragraph at lines 812--812
 \OT1/ptm/m/n/8 Fig. 9.  Com-mu-ni-ca-tion ab-la-tion: suc-cess rate com-par-i-s
 on be-tween
  []
@@ -446,7 +446,7 @@ on be-tween
 File: figures/ablation-max-reached.png Graphic file (type png)
 <use figures/ablation-max-reached.png>
 Package pdftex.def Info: figures/ablation-max-reached.png  used on input line 8
-34.
+33.
 (pdftex.def)             Requested size: 214.20154pt x 146.82933pt.
 
 
@@ -456,7 +456,7 @@ m.png>]
 <figures/comparison-sr.png, id=59, 172.134pt x 111.033pt>
 File: figures/comparison-sr.png Graphic file (type png)
 <use figures/comparison-sr.png>
-Package pdftex.def Info: figures/comparison-sr.png  used on input line 869.
+Package pdftex.def Info: figures/comparison-sr.png  used on input line 868.
 (pdftex.def)             Requested size: 252.0pt x 162.55746pt.
 
 
@@ -464,25 +464,25 @@ Package pdftex.def Info: figures/comparison-sr.png  used on input line 869.
 File: figures/comparison-max-reached.png Graphic file (type png)
 <use figures/comparison-max-reached.png>
 Package pdftex.def Info: figures/comparison-max-reached.png  used on input line
- 888.
+ 887.
 (pdftex.def)             Requested size: 252.0pt x 162.61664pt.
 <figures/trajectory-comparison.png, id=61, 609.77812pt x 316.18124pt>
 File: figures/trajectory-comparison.png Graphic file (type png)
 <use figures/trajectory-comparison.png>
 Package pdftex.def Info: figures/trajectory-comparison.png  used on input line 
-917.
+916.
 (pdftex.def)             Requested size: 252.0pt x 130.66759pt.
 <figures/deadlock-resolution.png, id=62, 272.655pt x 158.994pt>
 File: figures/deadlock-resolution.png Graphic file (type png)
 <use figures/deadlock-resolution.png>
 Package pdftex.def Info: figures/deadlock-resolution.png  used on input line 92
-5.
+4.
 (pdftex.def)             Requested size: 252.0pt x 146.95554pt.
 
 
 [7 <./figures/ablation-sr-rmha-vs-graphcomm.png> <./figures/ablation-max-reache
 d.png> <./figures/comparison-sr.png> <./figures/comparison-max-reached.png>]
-Underfull \hbox (badness 1354) in paragraph at lines 965--972
+Underfull \hbox (badness 1354) in paragraph at lines 964--971
 \OT1/ptm/m/n/10 par-tic-u-larly strong per-for-mance in high-density sce-nar-io
 s
  []
@@ -550,7 +550,7 @@ al/texlive/2025basic/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/te
 xlive/2025basic/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/local/texliv
 e/2025basic/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/202
 5basic/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on main.pdf (9 pages, 7117425 bytes).
+Output written on main.pdf (9 pages, 7118326 bytes).
 PDF statistics:
  181 PDF objects out of 1000 (max. 8388607)
  99 compressed objects within 1 object stream
