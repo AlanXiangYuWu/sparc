@@ -195,7 +195,7 @@ All methods evaluated under identical conditions: 128 robots, 40×40 random obst
 Requirements: Python 3.7+, PyTorch 2.1+, CUDA 11.8+
 
 ```bash
-git clone https://github.com/FirmamentWu/sparc.git
+git clone https://github.com/AlanXiangYuWu/sparc.git
 cd sparc
 conda create -n sparc python=3.7
 conda activate sparc
@@ -443,7 +443,7 @@ RMHA 使用 3 层堆叠的 Transformer 层，每层实现一跳消息传递，�
 ### 安装与使用
 
 ```bash
-git clone https://github.com/FirmamentWu/sparc.git
+git clone https://github.com/AlanXiangYuWu/sparc.git
 cd sparc
 conda create -n sparc python=3.7
 conda activate sparc
