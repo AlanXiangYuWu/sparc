@@ -206,7 +206,7 @@ L_entropy = −H(π).mean()
 **Total loss:**
 
 ```
-L = L_policy + 0.5 · L_value + 0.01 · L_entropy
+L = L_policy + 0.5 · L_value + 0.2 · L_entropy
 ```
 
 | Hyperparameter | Value |
@@ -217,6 +217,7 @@ L = L_policy + 0.5 · L_value + 0.01 · L_entropy
 | PPO epochs | 4 |
 | Mini-batches | 8 |
 | Clip parameter ε | 0.2 |
+| Entropy coefficient | 0.2 |
 
 ### Results
 
@@ -516,7 +517,7 @@ L_entropy = −H(π).mean()
 **总损失：**
 
 ```
-L = L_policy + 0.5 · L_value + 0.01 · L_entropy
+L = L_policy + 0.5 · L_value + 0.2 · L_entropy
 ```
 
 | 超参数 | 值 |
@@ -527,7 +528,7 @@ L = L_policy + 0.5 · L_value + 0.01 · L_entropy
 | PPO 轮数 | 4 |
 | Mini-batch 数 | 8 |
 | 裁剪参数 ε | 0.2 |
-
+| 熵系数 | 0.2 |
 ### 实验结果
 
 所有测试在 **128 机器人 · 40×40 网格**下进行，障碍密度分别为 0%、15%、30%。**SR**（成功率）= 在回合时间限制内到达目标的机器人比例。
