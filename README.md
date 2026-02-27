@@ -2,9 +2,9 @@
 
 > Submitted to IROS 2026
 >
-> Xiangyu Wu\* · Sayang Mu\* · Bo An† · Nanyang Technological University, Singapore
+> Sayang Mu\* · Xiangyu Wu\* · Nanyang Technological University, Singapore
 >
-> \*Equal contribution · †Corresponding author
+> \*Equal contribution
 
 [English](#english) | [中文](#中文)
 
@@ -302,7 +302,7 @@ sparc/
 ```bibtex
 @inproceedings{wu2026sparc,
   title     = {{SPARC}: Spatial-Aware Path Planning via Attentive Robot Communication},
-  author    = {Wu, Xiangyu and Mu, Sayang and An, Bo},
+  author    = {Mu, Sayang and Wu, Xiangyu},
   booktitle = {Proceedings of the IEEE/RSJ International Conference on
                Intelligent Robots and Systems (IROS)},
   year      = {2026}
@@ -317,9 +317,9 @@ For questions, open an Issue or email: `xiangyu015@e.ntu.edu.sg`
 
 ## 中文
 
-> 武翔宇\* · 慕飒扬\* · 安波† · 南洋理工大学（新加坡）
+> 慕飒扬\* · 武翔宇\* · 南洋理工大学（新加坡）
 >
-> \*共同一作 · †通讯作者
+> \*共同一作
 
 ### 项目简介
 
