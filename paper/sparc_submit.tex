@@ -605,12 +605,12 @@ where $\hat{A}_t$ is the Generalized Advantage Estimation (GAE)
 and $r_t(\theta)=\pi_\theta(a_t|o_t)/\pi_{\theta_{\mathrm{old}}}
 (a_t|o_t)$ is the importance sampling ratio.
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\columnwidth]{rmha-network}
+\includegraphics[width=\textwidth]{rmha-network}
 \caption{Network architecture of \rmha{} integrated with MAPPO.}
 \label{fig:rmha_net}
-\end{figure}
+\end{figure*}
 
 MAPPO employs Centralized Training with Decentralized Execution
 (CTDE): during training, agents share environment states, actions,
@@ -627,53 +627,20 @@ Algorithm~\ref{alg:rmha}.
 \noindent\textbf{Algorithm~\thealgctr}\quad \rmha{} Training Procedure
 \label{alg:rmha}\smallskip\hrule\smallskip
 {\small
-\noindent\textbf{Input:} Robot count $N$, episodes $K$, steps per
-episode $T$, FOV size $F$, Transformer layers $L$, discount
-$\gamma$, PPO clip $\epsilon$, intrinsic reward params
-$\tau,\varphi,\beta,M$\\[2pt]
-1: Initialize encoder params $\phi$, Transformer params $\psi$,
-   output head params $\theta$, replay buffer $\mathcal{B}$\\
-2: \textbf{for} $k = 0, 1, \ldots, K\!-\!1$ \textbf{do}\\
-3: \quad\textbf{for} $t = 0, 1, \ldots, T\!-\!1$ \textbf{do}\\
-4: \quad\quad Collect observations $o_1^t, \ldots, o_N^t$\\
-5: \quad\quad \textbf{// Encode observations}\\
-6: \quad\quad \textbf{for} each robot $i$ \textbf{do}\\
-7: \quad\quad\quad Encode $o_i^t$ via $\phi$
-   (Eqs.~\ref{eq:conv}--\ref{eq:lstm})\\
-8: \quad\quad \textbf{end for}\\
-9: \quad\quad \textbf{// Transformer-based communication}\\
-10: \quad\quad \textbf{for} each robot $i$ \textbf{do}\\
-11: \quad\quad\quad Generate message $m_i^t$; compute distances $D_i^t$\\
-12: \quad\quad \textbf{end for}\\
-13: \quad\quad Add sinusoidal positional embeddings (robot IDs)\\
-14: \quad\quad \textbf{for} $l = 1, \ldots, L$ \textbf{do}\\
-15: \quad\quad\quad Compute multi-head self-attention with distance
-   (Eqs.~\ref{eq:Q}--\ref{eq:msg})\\
-16: \quad\quad\quad Update messages via GRU and FFN\\
-17: \quad\quad \textbf{end for}\\
-18: \quad\quad \textbf{// Output heads}\\
-19: \quad\quad \textbf{for} each robot $i$ \textbf{do}\\
-20: \quad\quad\quad Concatenate Transformer output with LSTM state\\
-21: \quad\quad\quad Generate $\pi_i^t$, $v_i^t$, blocking prediction $b_i^t$\\
-22: \quad\quad \textbf{end for}\\
-23: \quad\quad \textbf{// Value-based conflict resolution}\\
-24: \quad\quad \textbf{for} each conflicting pair $(i,j)$ \textbf{do}\\
-25: \quad\quad\quad Compute priority via softmax over value diffs\\
-26: \quad\quad\quad High-priority robot keeps action; other resamples\\
-27: \quad\quad \textbf{end for}\\
-28: \quad\quad \textbf{// Intrinsic reward (episode buffer)}\\
-29: \quad\quad \textbf{for} each robot $i$ \textbf{do}\\
-30: \quad\quad\quad If max dist to buffer $\ge \tau$: generate
-   $r_i^{t,\mathrm{int}}$, update buffer\\
-31: \quad\quad \textbf{end for}\\
-32: \quad\quad Execute joint action $(a_1^t,\ldots,a_N^t)$, collect rewards\\
-33: \quad\quad Store $(o^t, a^t, r^t)$ in $\mathcal{B}$\\
-34: \quad\textbf{end for}\\
-35: \quad \textbf{// PPO update}\\
-36: \quad Sample mini-batch from $\mathcal{B}$\\
-37: \quad Compute advantages via GAE\\
-38: \quad Update $\phi, \psi, \theta$ using PPO loss (Eq.~\ref{eq:ppo})\\
-39: \textbf{end for}
+\noindent\textbf{Input:} Robot count $N$, episodes $K$, steps $T$,
+FOV $F$, layers $L$, discount $\gamma$, PPO clip $\epsilon$\\[2pt]
+1: Initialize encoder $\phi$, Transformer $\psi$, output heads $\theta$, buffer $\mathcal{B}$\\
+2: \textbf{for} episode $k = 0, \ldots, K\!-\!1$ \textbf{do}\\
+3: \quad\textbf{for} step $t = 0, \ldots, T\!-\!1$ \textbf{do}\\
+4: \quad\quad Encode observations via $\phi$ (Eqs.~\ref{eq:conv}--\ref{eq:lstm})\\
+5: \quad\quad Compute messages and distances for all robots\\
+6: \quad\quad \textbf{for} $l = 1, \ldots, L$: attention with distance (Eqs.~\ref{eq:Q}--\ref{eq:msg}), GRU, FFN\\
+7: \quad\quad Generate $\pi_i^t, v_i^t, b_i^t$ from Transformer output + LSTM state\\
+8: \quad\quad Resolve conflicts via softmax over value differences\\
+9: \quad\quad Compute intrinsic rewards; execute actions; store in $\mathcal{B}$\\
+10: \quad\textbf{end for}\\
+11: \quad Sample mini-batch; compute GAE; update $\phi,\psi,\theta$ via PPO (Eq.~\ref{eq:ppo})\\
+12: \textbf{end for}
 }\smallskip\hrule
 \end{figure}
 
@@ -880,11 +847,23 @@ while SCRIMP falls below 50\%, ODrM* drops to roughly 20\% (within
 the 5-minute planning limit), and DHC and PICO exhibit severe
 performance degradation.
 
-Regarding maximum goals reached, PICO and DHC degrade fastest
-despite having communication mechanisms.
-In contrast, \rmha{} maintains 120+~goals even at 30\% density,
-benefiting from spatial relation encoding for more precise modeling
-of local congestion structure.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{comparison-max-reached}
+\caption{Maximum goals reached across algorithms on Warehouse
+and City/Game maps.}
+\label{fig:comp_mr}
+\end{figure}
+
+Fig.~\ref{fig:comp_mr} shows the maximum goals reached.
+PICO and DHC degrade fastest despite having communication
+mechanisms, as they lack effective modeling of dynamic inter-robot
+relationships.
+In contrast, SCRIMP and \rmha, which employ graph
+attention/Transformer-based communication, maintain 120+~goals
+even at 30\% density.
+\rmha{} further benefits from spatial relation encoding, enabling
+more precise modeling of local congestion structure.
 
 % ── 3.3.3 Trajectory Visualization ─────────────────────────
 \subsubsection{Trajectory Visualization}

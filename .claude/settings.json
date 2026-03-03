@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(ls:*)",
-      "Bash(git -C /home/ubuntu/alan_repository/sparc status)"
+      "Bash(git -C /home/ubuntu/alan_repository/sparc status)",
+      "Bash(nvidia-smi:*)",
+      "Bash(git remote set-url origin git@github.com:AlanXiangYuWu/sparc.git)",
+      "Bash(pdflatex main.tex)",
+      "Read(//Users/alanv/Desktop/sparc/paper/**)",
+      "Read(//Users/alanv/Desktop/sparc/**)"
+    ],
+    "additionalDirectories": [
+      "/home/ubuntu/alan_repository/sparc/docs",
+      "/Users/alanv/Desktop/sparc/paper/figures"
     ]
   }
 }
