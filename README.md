@@ -2,9 +2,9 @@
 
 > Submitted to IROS 2026
 >
-> Sayang Mu\* · Xiangyu Wu\* · Bo An† · Nanyang Technological University, Singapore
+> Sayang Mu · Xiangyu Wu · Bo An† · Nanyang Technological University, Singapore
 >
-> \*Equal contribution · †Corresponding author
+> †Corresponding author
 
 [English](#english) | [中文](#中文)
 
@@ -317,9 +317,9 @@ For questions, open an Issue or email: `xiangyu015@e.ntu.edu.sg`
 
 ## 中文
 
-> 慕飒扬\* · 武翔宇\* · 安波† · 南洋理工大学（新加坡）
+> 慕飒扬 · 武翔宇 · 安波† · 南洋理工大学（新加坡）
 >
-> \*共同一作 · †通讯作者
+> †通讯作者
 
 ### 项目简介
 
