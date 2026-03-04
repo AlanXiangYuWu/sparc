@@ -1,3 +1,25 @@
+# Source code (under review, will be released upon acceptance)
+algorithms/
+config/
+envs/
+models/
+utils/
+embedding_demo/
+experiments/
+results/
+docs/
+*.py
+requirements.txt
+paper.zip
+
+# Paper source (keep only figures for README)
+paper/*.tex
+paper/*.cls
+paper/*.pdf
+paper/*.log
+paper/*.aux
+paper/figures_original/
+
 # Python
 __pycache__/
 *.pyc
@@ -19,23 +41,8 @@ env/
 *.swo
 .DS_Store
 
-# Experiment scripts and results (not for open source)
-experiments/
-results/
-
 # Model checkpoints (large files)
 *.pth
-
-# Training logs (not for open source)
-*.log
-
-# Non-public docs
-docs/说明.txt
-docs/InterviewAnalysis.md
-docs/项目原理详解.md
-docs/paper.docx
-docs/paper.md
-docs/项目问题.md
 
 # pip install artifacts
 =*
