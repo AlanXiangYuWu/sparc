@@ -266,11 +266,11 @@ All evaluations use **128 robots** on a **40×40 grid** at obstacle densities of
 
 | Method | SR @ 0% | SR @ 15% | SR @ 30% |
 | --- | --- | --- | --- |
-| MAPPO (no comm) | ~95% | ~60% | ~40% |
-| MAPPO + Graph Comm | ~98% | ~75% | ~50% |
-| **SPARC / RMHA (ours)** | **~100%** | **~90%** | **~75%** |
+| MAPPO (no comm) | ~85% | ~65% | ~40% |
+| MAPPO + Graph Comm | ~95% | ~75% | ~50% |
+| **SPARC / RMHA (ours)** | **~98%** | **~85%** | **~75%** |
 
-At 30% obstacle density, SPARC outperforms graph communication (no distance encoding) by **+25% SR**, and no-communication baseline by **+53% SR**.
+At 30% obstacle density, SPARC outperforms graph communication (no distance encoding) by **+25% SR**, and the no-communication baseline by **+35% SR**.
 
 <p align="center">
   <img src="paper/figures/ablation-reward.png" width="500"/>
@@ -291,11 +291,11 @@ All methods evaluated under identical conditions: 128 robots, 40×40 random obst
 
 | Method | SR @ 0% | SR @ 15% | SR @ 30% |
 | --- | --- | --- | --- |
-| ODrM* | ~100% | ~60% | ~20% |
-| SCRIMP | ~98% | ~70% | ~50% |
-| DHC † | ~95% | ~30% | ~0% |
-| PICO ‡ | ~95% | ~30% | ~0% |
-| **SPARC (ours)** | **~100%** | **~90%** | **~75%** |
+| ODrM* | ~100% | ~100% | ~20% |
+| SCRIMP | ~98% | ~93% | ~45% |
+| DHC † | ~95% | ~70% | ~45% |
+| PICO ‡ | ~8% | ~2% | ~0% |
+| **SPARC (ours)** | **~98%** | **~85%** | **~75%** |
 
 † DHC uses a 9×9 FOV. ‡ PICO uses an 11×11 FOV. SPARC uses a 3×3 FOV.
 
@@ -611,11 +611,11 @@ L = L_policy + 0.5 · L_value + 0.2 · L_entropy
 
 | 方法 | SR @ 0% | SR @ 15% | SR @ 30% |
 | --- | --- | --- | --- |
-| MAPPO（无通信） | ~95% | ~60% | ~40% |
-| MAPPO + 图通信 | ~98% | ~75% | ~50% |
-| **SPARC / RMHA（本文）** | **~100%** | **~90%** | **~75%** |
+| MAPPO（无通信） | ~85% | ~65% | ~40% |
+| MAPPO + 图通信 | ~95% | ~75% | ~50% |
+| **SPARC / RMHA（本文）** | **~98%** | **~85%** | **~75%** |
 
-在 30% 障碍密度下，SPARC 成功率比无距离编码的图通信高 **+25%**，比无通信基线高 **+53%**。
+在 30% 障碍密度下，SPARC 成功率比无距离编码的图通信高 **+25%**，比无通信基线高 **+35%**。
 
 <p align="center">
   <img src="paper/figures/ablation-reward.png" width="500"/>
@@ -636,11 +636,11 @@ L = L_policy + 0.5 · L_value + 0.2 · L_entropy
 
 | 方法 | SR @ 0% | SR @ 15% | SR @ 30% |
 | --- | --- | --- | --- |
-| ODrM* | ~100% | ~60% | ~20% |
-| SCRIMP | ~98% | ~70% | ~50% |
-| DHC † | ~95% | ~30% | ~0% |
-| PICO ‡ | ~95% | ~30% | ~0% |
-| **SPARC（本文）** | **~100%** | **~90%** | **~75%** |
+| ODrM* | ~100% | ~100% | ~20% |
+| SCRIMP | ~98% | ~93% | ~45% |
+| DHC † | ~95% | ~70% | ~45% |
+| PICO ‡ | ~8% | ~2% | ~0% |
+| **SPARC（本文）** | **~98%** | **~85%** | **~75%** |
 
 † DHC 使用 9×9 视野。‡ PICO 使用 11×11 视野。SPARC 仅使用 3×3 视野。
 
