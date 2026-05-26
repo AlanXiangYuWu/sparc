@@ -1,15 +1,15 @@
-# SPARC: Spatial-Aware Path Planning via Attentive Robot Communication
+# SPARC: Spatial-Aware Path Planning via Attentive Agent Communication
 
 [![arXiv](https://img.shields.io/badge/arXiv-2603.02845-b31b1b.svg)](https://arxiv.org/abs/2603.02845)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Under Review at IROS 2026**
+> **Submitted to ACM Multimedia 2026 (under double-blind review)**
 >
 > Sayang Mu · Xiangyu Wu · Bo An† · Nanyang Technological University, Singapore
 >
 > †Corresponding author
 
-> **Code Release**: The source code will be made publicly available upon acceptance of the paper. The project is currently under double-blind review.
+> **Code Release**: The source code will be made publicly available upon acceptance of the paper. The project is currently under double-blind review at ACM MM 2026.
 
 [English](#english) | [中文](#中文)
 
@@ -17,30 +17,30 @@
 
 ### Overview
 
-**SPARC** addresses two fundamental bottlenecks in Multi-Robot Path Planning (MRPP): *low communication efficiency* and *insufficient cooperative optimization*. We propose **RMHA** (Relation-enhanced Multi-Head Attention), a communication mechanism that explicitly encodes spatial relationships between robots into the attention weight computation.
+**SPARC** addresses two fundamental bottlenecks in Multi-Agent Path Finding (MAPF): *low communication efficiency* and *insufficient cooperative optimization*. We propose **RMHA** (Relation-enhanced Multi-Head Attention), a communication mechanism that explicitly encodes spatial relationships between agents into the attention weight computation.
 
-By embedding inter-robot Manhattan distances as edge features alongside observation content, RMHA enables communication weights to adapt dynamically to topological relationships. This reduces communication overhead while significantly improving path planning success rates — especially in high-density, obstacle-rich environments.
+By embedding inter-agent Manhattan distances as edge features alongside observation content, RMHA enables communication weights to adapt dynamically to topological relationships. This reduces communication overhead while significantly improving path planning success rates — especially in high-density, obstacle-rich environments.
 
 ### Key Contributions
 
-1. **Spatial Relation-Enhanced Attention** — Inter-robot relative distance is incorporated as explicit edge information into multi-head attention, enabling distance-aware communication weight allocation that jointly considers spatial proximity and message content.
+1. **Spatial Relation-Enhanced Attention** — Inter-agent relative distance is incorporated as explicit edge information into multi-head attention, enabling distance-aware communication weight allocation that jointly considers spatial proximity and message content.
 
 2. **Communication Architecture for Stable Online RL** — Distance-constrained attention masking limits message passing to local neighbors, while GRU-gated message fusion adaptively balances new communications against prior beliefs. Together these address the training instabilities typical of Transformer-based communication in online multi-agent RL.
 
-3. **Zero-Shot Scalability** — Attention-based communication with parameter sharing enables zero-shot generalization from 8-robot training to 128-robot deployment, with no performance collapse across varying obstacle densities.
+3. **Zero-Shot Scalability** — Attention-based communication with parameter sharing enables zero-shot generalization from 8-agent training to 128-agent deployment, with no performance collapse across varying obstacle densities.
 
 ### Problem Formulation
 
 <p align="center">
   <img src="paper/figures/mrpp-constraints.png" width="400"/>
   <br>
-  <em>Figure 1: MRPP constraints — vertex collisions, edge collisions, and swap collisions must all be avoided.</em>
+  <em>Figure 1: MAPF constraints — vertex collisions, edge collisions, and swap collisions must all be avoided.</em>
 </p>
 
 <p align="center">
   <img src="paper/figures/marl-modeling.png" width="500"/>
   <br>
-  <em>Figure 2: MARL modeling paradigms for MRPP: Markov Game (MG), Partially Observable MG (POMG), and Dec-POMDP.</em>
+  <em>Figure 2: MARL modeling paradigms for MAPF: Markov Game (MG), Partially Observable MG (POMG), and Dec-POMDP.</em>
 </p>
 
 ### Method
@@ -55,7 +55,7 @@ RMHA replaces standard dot-product attention with a spatially-aware variant.
 
 `s_ij = (o_i + d_{i→j}) · Wq^T · Wk · (o_j + d_{j→i})`
 
-where `d_{*→*}` is the learned embedding of the Manhattan distance between robots. A communication radius mask further restricts message passing to local neighbors, modeling realistic bandwidth constraints.
+where `d_{*→*}` is the learned embedding of the Manhattan distance between agents. A communication radius mask further restricts message passing to local neighbors, modeling realistic bandwidth constraints.
 
 <p align="center">
   <img src="paper/figures/rmha-module.png" width="500"/>
@@ -68,7 +68,7 @@ where `d_{*→*}` is the learned embedding of the Manhattan distance between rob
 <p align="center">
   <img src="paper/figures/rmha-network.png" width="600"/>
   <br>
-  <em>Figure 4: Full network architecture of RMHA integrated with MAPPO.</em>
+  <em>Figure 4: Full network architecture of SPARC — RMHA communication module integrated with MAPPO, including the actor-critic training loop (PPO clipped policy loss + value loss + GAE advantage estimation).</em>
 </p>
 
 ```text
@@ -85,7 +85,7 @@ image (N, 8, 3, 3)                         vector (N, 7)
                           │
                     LSTM (256, 256)
                           │
-                    h_i^t (N, 256)     ← per-robot encoded features
+                    h_i^t (N, 256)     ← per-agent encoded features
 
 ═══ Stage 2: RMHA Communication (×3 layers) ═══
 
@@ -127,7 +127,7 @@ distance_matrix (N, N)          messages M = h_i^t
 | --- | --- | --- |
 | 1-4 | Heuristic maps (up/down/left/right) | Whether moving in each direction gets closer to goal (binary) |
 | 5 | Obstacle map | Walls and boundaries within FOV |
-| 6 | Other robots map | Teammate positions within FOV |
+| 6 | Other agents map | Teammate positions within FOV |
 | 7 | Own goal map | Own goal position (when visible in FOV) |
 | 8 | Other goals map | Teammates' goal positions within FOV |
 
@@ -142,20 +142,20 @@ distance_matrix (N, N)          messages M = h_i^t
 | dmin_prev | Min distance to historical positions | Novelty indicator for exploration |
 | a_prev | Previous action (0-4) | Action continuity (avoid oscillation) |
 
-**Distance Matrix (N, N)** — pairwise Manhattan distances between all robots, recomputed every step; used by RMHA to generate spatially-aware attention weights.
+**Distance Matrix (N, N)** — pairwise Manhattan distances between all agents, recomputed every step; used by RMHA to generate spatially-aware attention weights.
 
 #### Collision Handling
 
 At each timestep, the environment checks for two collision types and resolves them before updating positions:
 
-- **Vertex collision**: two robots move to the same cell → both stay in place, each receives -2.0 penalty
-- **Edge collision (swap)**: two robots exchange positions → both stay in place, each receives -2.0 penalty
+- **Vertex collision**: two agents move to the same cell → both stay in place, each receives -2.0 penalty
+- **Edge collision (swap)**: two agents exchange positions → both stay in place, each receives -2.0 penalty
 
 #### Reward Design
 
 The reward signal combines rule-based extrinsic and intrinsic components (no learned reward networks):
 
-**Extrinsic reward** (per robot per step):
+**Extrinsic reward** (per agent per step):
 
 | Component | Condition | Value | Purpose |
 | --- | --- | --- | --- |
@@ -167,19 +167,19 @@ The reward signal combines rule-based extrinsic and intrinsic components (no lea
 
 **Intrinsic reward** (episodic count-based exploration):
 
-Each robot maintains a sparse buffer of visited milestone positions. When the current position has Manhattan distance >= 2 to all buffer entries, a +0.1 exploration bonus is awarded and the position is added to the buffer. This prevents robots from circling in familiar areas.
+Each agent maintains a sparse buffer of visited milestone positions. When the current position has Manhattan distance >= 2 to all buffer entries, a +0.1 exploration bonus is awarded and the position is added to the buffer. This prevents agents from circling in familiar areas.
 
 #### Multi-Hop Information Propagation
 
-RMHA uses 3 stacked Transformer layers. Each layer enables one hop of message passing, progressively expanding each robot's information horizon:
+RMHA uses 3 stacked Transformer layers. Each layer enables one hop of message passing, progressively expanding each agent's information horizon:
 
 ```text
-Layer 1: Robot A directly receives Robot B's message          (1-hop)
-Layer 2: Robot A receives B's message which already contains C (2-hop)
-Layer 3: Robot A indirectly perceives Robot D via B→C→D chain  (3-hop)
+Layer 1: Agent A directly receives Agent B's message          (1-hop)
+Layer 2: Agent A receives B's message which already contains C (2-hop)
+Layer 3: Agent A indirectly perceives Agent D via B→C→D chain  (3-hop)
 ```
 
-This multi-hop design allows robots to coordinate beyond their local communication radius without explicit global broadcasting.
+This multi-hop design allows agents to coordinate beyond their local communication radius without explicit global broadcasting.
 
 #### Zero-Shot Scalability Setup
 
@@ -189,13 +189,13 @@ The model is trained at small scale and tested at large scale without any fine-t
 | --- | --- | --- |
 | Grid size | Random from {10, 25, 40} | Fixed 40×40 |
 | Obstacle density | Triangular distribution [0%, 50%], peak 33% | Fixed 0% / 15% / 30% |
-| Robot count | **8** | **16 / 32 / 64 / 128** |
+| Agent count | **8** | **16 / 32 / 64 / 128** |
 
-This train-test discrepancy is intentional: the attention mechanism naturally handles variable-length sequences (N changes only the attention matrix size), and parameter sharing across robots means individual robot behavior is N-invariant.
+This train-test discrepancy is intentional: the attention mechanism naturally handles variable-length sequences (N changes only the attention matrix size), and parameter sharing across agents means individual agent behavior is N-invariant.
 
 #### PPO Loss Computation
 
-Training uses MAPPO (Multi-Agent PPO) with GAE advantage estimation. Each update collects 256 steps × 8 robots = 2048 samples, then performs 4 epochs × 8 mini-batches = 32 gradient updates per rollout.
+Training uses MAPPO (Multi-Agent PPO) with GAE advantage estimation. Each update collects 256 steps × 8 agents = 2048 samples, then performs 4 epochs × 8 mini-batches = 32 gradient updates per rollout.
 
 **Step 1: GAE (Generalized Advantage Estimation)** — computed via backward recursion over the rollout:
 
@@ -255,12 +255,12 @@ L = L_policy + 0.5 · L_value + 0.2 · L_entropy
 <p align="center">
   <img src="paper/figures/grid-environment.png" width="350"/>
   <br>
-  <em>Figure 5: A 10×10 grid world with 30% obstacle density and 8 robots. Colored squares = start positions; colored circles = goals; gray circles = obstacles; red dashed box = 3×3 FOV.</em>
+  <em>Figure 5: A 10×10 grid world with 30% obstacle density and 8 agents. Colored squares = start positions; colored circles = goals; gray circles = obstacles; red dashed box = 3×3 FOV.</em>
 </p>
 
 ### Results
 
-All evaluations use **128 robots** on a **40×40 grid** at obstacle densities of 0%, 15%, and 30%. **SR** = Success Rate (percentage of robots reaching their goal within the episode time limit).
+All evaluations use **128 agents** on a **40×40 grid** at obstacle densities of 0%, 15%, and 30%. **SR** = Success Rate (percentage of agents reaching their goal within the episode time limit).
 
 #### Ablation: Communication Mechanism
 
@@ -287,7 +287,7 @@ At 30% obstacle density, SPARC outperforms graph communication (no distance enco
 
 #### Comparison with State-of-the-Art
 
-All methods evaluated under identical conditions: 128 robots, 40×40 random obstacle map, 256-step episode limit.
+All methods evaluated under identical conditions: 128 agents, 40×40 random obstacle map, 256-step episode limit.
 
 | Method | SR @ 0% | SR @ 15% | SR @ 30% |
 | --- | --- | --- | --- |
@@ -316,7 +316,7 @@ All methods evaluated under identical conditions: 128 robots, 40×40 random obst
 <p align="center">
   <img src="paper/figures/scalability.png" width="500"/>
   <br>
-  <em>Figure 6: Success rate of RMHA under different robot counts (16 / 32 / 64 / 128), trained with only 8 robots.</em>
+  <em>Figure 6: Success rate of RMHA under different agent counts (16 / 32 / 64 / 128), trained with only 8 agents.</em>
 </p>
 
 #### Trajectory Visualization
@@ -330,14 +330,14 @@ All methods evaluated under identical conditions: 128 robots, 40×40 random obst
 <p align="center">
   <img src="paper/figures/deadlock-resolution.png" width="600"/>
   <br>
-  <em>Figure 12: Deadlock resolution in a narrow corridor. Under RMHA, robot A yields at T3, allowing B to pass — both proceed by T4. The baseline leads to deadlock.</em>
+  <em>Figure 12: Deadlock resolution in a narrow corridor. Under RMHA, agent A yields at T3, allowing B to pass — both proceed by T4. The baseline leads to deadlock.</em>
 </p>
 
 ### Citation
 
 ```bibtex
 @article{mu2025sparc,
-  title   = {{SPARC}: Spatial-Aware Path Planning via Attentive Robot Communication},
+  title   = {{SPARC}: Spatial-Aware Path Planning via Attentive Agent Communication},
   author  = {Mu, Sayang and Wu, Xiangyu and An, Bo},
   journal = {arXiv preprint arXiv:2603.02845},
   year    = {2025}
@@ -352,40 +352,40 @@ For questions, open an Issue or email: `xiangyu015@e.ntu.edu.sg`
 
 ## 中文
 
-> **论文正在 IROS 2026 审稿中**
+> **已投稿 ACM Multimedia 2026（双盲审稿中）**
 >
 > 慕飒扬 · 武翔宇 · 安波† · 南洋理工大学（新加坡）
 >
 > †通讯作者
 
-> **代码开源**: 代码将在论文录用后公开发布。目前论文处于双盲审稿阶段。
+> **代码开源**: 代码将在论文录用后公开发布。目前论文正在 ACM MM 2026 双盲审稿阶段。
 
 ### 项目简介
 
-**SPARC** 针对多机器人路径规划（MRPP）中通信效率低下与协同优化不足两大核心问题，提出了空间关系增强多头注意力通信方法 **RMHA**（Relation-enhanced Multi-Head Attention）。
+**SPARC** 针对多智能体路径规划（MAPF）中通信效率低下与协同优化不足两大核心问题，提出了空间关系增强多头注意力通信方法 **RMHA**（Relation-enhanced Multi-Head Attention）。
 
-RMHA 将机器人间的相对曼哈顿距离作为边特征显式嵌入注意力权重计算，使通信权重能够动态适应机器人的拓扑关系，在有效降低通信负载的同时显著提升路径规划成功率——尤其在高密度复杂障碍环境下优势突出。
+RMHA 将智能体间的相对曼哈顿距离作为边特征显式嵌入注意力权重计算，使通信权重能够动态适应智能体的拓扑关系，在有效降低通信负载的同时显著提升路径规划成功率——尤其在高密度复杂障碍环境下优势突出。
 
 ### 核心贡献
 
-1. **空间关系增强注意力机制** — 将机器人间相对距离作为显式边信息融入多头注意力，实现同时感知空间邻近性与消息内容的动态通信权重分配。
+1. **空间关系增强注意力机制** — 将智能体间相对距离作为显式边信息融入多头注意力，实现同时感知空间邻近性与消息内容的动态通信权重分配。
 
 2. **面向在线强化学习的通信架构** — 距离约束的注意力掩码将消息传递限制在局部邻居范围内；GRU 门控消息融合自适应平衡新通信与历史信念。两者共同解决了 Transformer 通信模块在在线多智能体 RL 训练中的不稳定问题。
 
-3. **零样本规模泛化** — 基于注意力机制的通信与参数共享，实现从 8 机器人训练直接零样本扩展至 128 机器人部署，在不同障碍密度下均无性能崩塌。
+3. **零样本规模泛化** — 基于注意力机制的通信与参数共享，实现从 8 智能体训练直接零样本扩展至 128 智能体部署，在不同障碍密度下均无性能崩塌。
 
 ### 问题建模
 
 <p align="center">
   <img src="paper/figures/mrpp-constraints.png" width="400"/>
   <br>
-  <em>图 1: MRPP 约束 — 顶点碰撞、边碰撞和交换碰撞均需避免。</em>
+  <em>图 1: MAPF 约束 — 顶点碰撞、边碰撞和交换碰撞均需避免。</em>
 </p>
 
 <p align="center">
   <img src="paper/figures/marl-modeling.png" width="500"/>
   <br>
-  <em>图 2: MRPP 的多智能体建模范式：MG、POMG 和 Dec-POMDP。</em>
+  <em>图 2: MAPF 的多智能体建模范式：MG、POMG 和 Dec-POMDP。</em>
 </p>
 
 ### 方法
@@ -400,7 +400,7 @@ RMHA 将标准点积注意力替换为空间感知变体。
 
 `s_ij = (o_i + d_{i→j}) · Wq^T · Wk · (o_j + d_{j→i})`
 
-其中 `d_{*→*}` 为机器人间曼哈顿距离的可学习嵌入，通信半径掩码进一步将消息传递限制在局部邻居范围内。
+其中 `d_{*→*}` 为智能体间曼哈顿距离的可学习嵌入，通信半径掩码进一步将消息传递限制在局部邻居范围内。
 
 <p align="center">
   <img src="paper/figures/rmha-module.png" width="500"/>
@@ -413,7 +413,7 @@ RMHA 将标准点积注意力替换为空间感知变体。
 <p align="center">
   <img src="paper/figures/rmha-network.png" width="600"/>
   <br>
-  <em>图 4: RMHA 与 MAPPO 集成的完整网络架构。</em>
+  <em>图 4: SPARC 完整网络架构 —— RMHA 通信模块与 MAPPO 集成，包含 actor-critic 训练循环（PPO 裁剪策略损失 + 价值损失 + GAE 优势估计）。</em>
 </p>
 
 ```text
@@ -430,7 +430,7 @@ image (N, 8, 3, 3)                         vector (N, 7)
                           │
                     LSTM (256, 256)
                           │
-                    h_i^t (N, 256)     ← 每个机器人的编码特征
+                    h_i^t (N, 256)     ← 每个智能体的编码特征
 
 ═══ 阶段二：RMHA 通信模块（×3 层）═══
 
@@ -472,7 +472,7 @@ distance_matrix (N, N)          消息 M = h_i^t
 | --- | --- | --- |
 | 1-4 | 启发式地图（上/下/左/右） | 向该方向移动是否更接近目标（二值） |
 | 5 | 障碍物地图 | FOV 内的墙壁和边界 |
-| 6 | 其他机器人地图 | FOV 内队友位置 |
+| 6 | 其他智能体地图 | FOV 内队友位置 |
 | 7 | 自身目标地图 | 自身目标位置（在 FOV 内时标记） |
 | 8 | 他人目标地图 | FOV 内队友的目标位置 |
 
@@ -487,20 +487,20 @@ distance_matrix (N, N)          消息 M = h_i^t
 | dmin_prev | 与历史位置最小距离 | 新颖度指标 |
 | a_prev | 上一步动作 (0-4) | 动作连贯性（避免来回震荡） |
 
-**Distance Matrix (N, N)** — 所有机器人之间的曼哈顿距离矩阵，每步重新计算；RMHA 据此生成空间感知的注意力权重。
+**Distance Matrix (N, N)** — 所有智能体之间的曼哈顿距离矩阵，每步重新计算；RMHA 据此生成空间感知的注意力权重。
 
 #### 碰撞处理
 
 每个时间步中，环境检测两种碰撞类型并在更新位置前解决：
 
-- **顶点碰撞**：两个机器人移动到同一格子 → 双方退回原位，各扣 -2.0 惩罚
-- **边碰撞（交换碰撞）**：两个机器人互换位置 → 双方退回原位，各扣 -2.0 惩罚
+- **顶点碰撞**：两个智能体移动到同一格子 → 双方退回原位，各扣 -2.0 惩罚
+- **边碰撞（交换碰撞）**：两个智能体互换位置 → 双方退回原位，各扣 -2.0 惩罚
 
 #### 奖励设计
 
 奖励信号由规则计算的外在奖励和内在奖励组成（不使用可学习的奖励网络）：
 
-**外在奖励**（每步每个机器人）：
+**外在奖励**（每步每个智能体）：
 
 | 分量 | 条件 | 值 | 作用 |
 | --- | --- | --- | --- |
@@ -512,19 +512,19 @@ distance_matrix (N, N)          消息 M = h_i^t
 
 **内在奖励**（基于 episode 内计数的探索机制）：
 
-每个机器人维护一个稀疏的已访问里程碑缓冲区。当前位置与缓冲区中所有位置的曼哈顿距离均 >= 2 时，给予 +0.1 探索奖励并将该位置加入缓冲区。此机制防止机器人在已访问区域原地打转。
+每个智能体维护一个稀疏的已访问里程碑缓冲区。当前位置与缓冲区中所有位置的曼哈顿距离均 >= 2 时，给予 +0.1 探索奖励并将该位置加入缓冲区。此机制防止智能体在已访问区域原地打转。
 
 #### 多跳信息传播
 
-RMHA 使用 3 层堆叠的 Transformer 层，每层实现一跳消息传递，逐步扩大每个机器人的信息感知范围：
+RMHA 使用 3 层堆叠的 Transformer 层，每层实现一跳消息传递，逐步扩大每个智能体的信息感知范围：
 
 ```text
-第1层: 机器人 A 直接获取机器人 B 的信息          (1-hop)
-第2层: 机器人 A 获取"B 眼中的 C"的信息            (2-hop)
-第3层: 机器人 A 间接感知机器人 D (经 B→C→D 链路)  (3-hop)
+第1层: 智能体 A 直接获取智能体 B 的信息          (1-hop)
+第2层: 智能体 A 获取"B 眼中的 C"的信息            (2-hop)
+第3层: 智能体 A 间接感知智能体 D (经 B→C→D 链路)  (3-hop)
 ```
 
-多跳设计使机器人无需全局广播即可实现超出局部通信半径的协调。
+多跳设计使智能体无需全局广播即可实现超出局部通信半径的协调。
 
 #### 零样本规模泛化设置
 
@@ -534,13 +534,13 @@ RMHA 使用 3 层堆叠的 Transformer 层，每层实现一跳消息传递，�
 | --- | --- | --- |
 | 网格大小 | 从 {10, 25, 40} 随机采样 | 固定 40×40 |
 | 障碍物密度 | 三角分布 [0%, 50%]，峰值 33% | 固定 0% / 15% / 30% |
-| 机器人数量 | **8** | **16 / 32 / 64 / 128** |
+| 智能体数量 | **8** | **16 / 32 / 64 / 128** |
 
-训练与测试的规模差异是有意设计的：注意力机制天然支持变长序列（N 变化仅影响注意力矩阵大小），参数共享使单个机器人的行为与 N 无关。
+训练与测试的规模差异是有意设计的：注意力机制天然支持变长序列（N 变化仅影响注意力矩阵大小），参数共享使单个智能体的行为与 N 无关。
 
 #### PPO 损失函数计算
 
-训练使用 MAPPO（Multi-Agent PPO）结合 GAE 优势估计。每次更新收集 256 步 × 8 机器人 = 2048 条样本，随后进行 4 轮 epoch × 8 个 mini-batch = 32 次梯度更新。
+训练使用 MAPPO（Multi-Agent PPO）结合 GAE 优势估计。每次更新收集 256 步 × 8 智能体 = 2048 条样本，随后进行 4 轮 epoch × 8 个 mini-batch = 32 次梯度更新。
 
 **第一步：GAE（广义优势估计）** — 在 rollout 上反向递归计算：
 
@@ -600,12 +600,12 @@ L = L_policy + 0.5 · L_value + 0.2 · L_entropy
 <p align="center">
   <img src="paper/figures/grid-environment.png" width="350"/>
   <br>
-  <em>图 5: 10×10 网格环境，30% 障碍密度，8 个机器人。彩色方块 = 起点；彩色圆圈 = 目标；灰色圆圈 = 障碍物；红色虚线框 = 3×3 视野。</em>
+  <em>图 5: 10×10 网格环境，30% 障碍密度，8 个智能体。彩色方块 = 起点；彩色圆圈 = 目标；灰色圆圈 = 障碍物；红色虚线框 = 3×3 视野。</em>
 </p>
 
 ### 实验结果
 
-所有测试在 **128 机器人 · 40×40 网格**下进行，障碍密度分别为 0%、15%、30%。**SR**（成功率）= 在回合时间限制内到达目标的机器人比例。
+所有测试在 **128 智能体 · 40×40 网格**下进行，障碍密度分别为 0%、15%、30%。**SR**（成功率）= 在回合时间限制内到达目标的智能体比例。
 
 #### 通信消融实验
 
@@ -632,7 +632,7 @@ L = L_policy + 0.5 · L_value + 0.2 · L_entropy
 
 #### 与 SOTA 方法对比
 
-所有方法在相同条件下评估：128 机器人，40×40 随机障碍地图，最大 256 步。
+所有方法在相同条件下评估：128 智能体，40×40 随机障碍地图，最大 256 步。
 
 | 方法 | SR @ 0% | SR @ 15% | SR @ 30% |
 | --- | --- | --- | --- |
@@ -661,7 +661,7 @@ L = L_policy + 0.5 · L_value + 0.2 · L_entropy
 <p align="center">
   <img src="paper/figures/scalability.png" width="500"/>
   <br>
-  <em>图 6: RMHA 在不同机器人数量（16 / 32 / 64 / 128）下的成功率，仅用 8 个机器人训练。</em>
+  <em>图 6: RMHA 在不同智能体数量（16 / 32 / 64 / 128）下的成功率，仅用 8 个智能体训练。</em>
 </p>
 
 #### 轨迹可视化
@@ -675,14 +675,14 @@ L = L_policy + 0.5 · L_value + 0.2 · L_entropy
 <p align="center">
   <img src="paper/figures/deadlock-resolution.png" width="600"/>
   <br>
-  <em>图 12: 窄走廊死锁解决。RMHA 下机器人 A 在 T3 让路，B 通过后双方均在 T4 前顺利到达。基线方法导致死锁。</em>
+  <em>图 12: 窄走廊死锁解决。RMHA 下智能体 A 在 T3 让路，B 通过后双方均在 T4 前顺利到达。基线方法导致死锁。</em>
 </p>
 
 ### 引用
 
 ```bibtex
 @article{mu2025sparc,
-  title   = {{SPARC}: Spatial-Aware Path Planning via Attentive Robot Communication},
+  title   = {{SPARC}: Spatial-Aware Path Planning via Attentive Agent Communication},
   author  = {Mu, Sayang and Wu, Xiangyu and An, Bo},
   journal = {arXiv preprint arXiv:2603.02845},
   year    = {2025}
