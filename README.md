@@ -3,13 +3,13 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2603.02845-b31b1b.svg)](https://arxiv.org/abs/2603.02845)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Submitted to ACM Multimedia 2026 (under double-blind review)**
+> **Submitted to IROS 2026 (under double-blind review)**
 >
-> Sayang Mu · Xiangyu Wu · Bo An† · Nanyang Technological University, Singapore
+> Sayang Mu\* · Xiangyu Wu\* · Bo An† · Nanyang Technological University, Singapore
 >
-> †Corresponding author
+> \*These authors contributed equally to this work. †Corresponding author
 
-> **Code Release**: The source code will be made publicly available upon acceptance of the paper. The project is currently under double-blind review at ACM MM 2026.
+> **Code Release**: The source code will be made publicly available upon acceptance of the paper. The project is currently under double-blind review at IROS 2026.
 
 [English](#english) | [中文](#中文)
 
